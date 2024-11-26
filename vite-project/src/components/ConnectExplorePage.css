@@ -1,0 +1,32 @@
+/* ConnectExplorePage.module.css */
+
+/* Hero Section */
+.bg-gradient-to-r {
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+  
+  /* Card Styles */
+  .card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Button Styles */
+  button {
+    transition: background-color 0.3s ease;
+  }
+  
+  /* Footer Styling */
+  footer {
+    background-color: #1E3A8A; /* Dark Blue */
+    padding: 20px;
+    text-align: center;
+  }
+  

@@ -1,0 +1,7 @@
+.btn {
+    transition: background-color 0.3s ease;
+  }
+  .btn:hover {
+    background-color: #4C51BF; /* Lighter shade of blue for hover */
+  }
+  
