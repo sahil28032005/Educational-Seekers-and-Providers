@@ -1,8 +1,59 @@
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
+
 generator client {
   provider = "prisma-client-js"
 }
 
+model User {
+  id           Int            @id @default(autoincrement())
+  name         String
+  email        String
+  password     String
+  role         String
+  bio          String?
+  profileImg   String?
+  location     String
+  budget       Float?
+  expertise    String[]
+  connections  Connection[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  Notification Notification[]
+  SearchFilter SearchFilter[]
+}
+
+model Connection {
+  id          Int    @id @default(autoincrement())
+  requesterId Int //user who sent the connection request
+  receiverId  Int //user who received connection request
+  status      String @default("pending") //it will be pemding,accepted,rejected
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User?    @relation(fields: [requesterId], references: [id])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String //like connectionrequest
+  content   String //message content
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model SearchFilter {
+  id         Int      @id @default(autoincrement())
+  userId     Int // User who saved this filter
+  courseType String? // Filter by course type
+  location   String? // Filter by location
+  budget     Float? // Filter by budget
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
