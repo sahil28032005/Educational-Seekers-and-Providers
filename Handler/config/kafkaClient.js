@@ -7,13 +7,14 @@ const config = {
 }
 const kafka = new Kafka(config);
 
-//make producer for test 
-module.exports={kafka};
+const consumer = kafka.consumer();
 
-//testing kafka is working or not
-// (async () => {
-//     const producer = kafka.producer();
-//     await producer.connect();
-//     console.log("producer connection successfull will be be able to publis logs");
-// })();
+const initConsumer = async () => {
+    await producer.connect({ groupId: 'notification-group' });
+    console.log('kafka producer connected successfully to kafka broker');
+}
+
+//make producer for test 
+module.exports = { kafka, producer };
+
 
