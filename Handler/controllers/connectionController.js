@@ -1,5 +1,5 @@
 const prisma = require('../config/prismaClient');
-
+const {kafka}=require('../config/kafkaClient');
 exports.createConnection = async (req, res) => {
     const { requesterId, receiverId } = requesterId.body;
     try {
@@ -62,3 +62,9 @@ exports.updateConnectionStatus = async (req, res) => {
 
     }
 }
+
+(async () => {
+    const producer = kafka.producer();
+    await producer.connect();
+    console.log("producer connection successfull will be be able to publis logs");
+})();
