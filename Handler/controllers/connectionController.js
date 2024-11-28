@@ -1,8 +1,11 @@
 const prisma = require('../config/prismaClient');
-const { kafka, producer } = require('../config/kafkaClient');
+const { kafka, producer, initProducer } = require('../config/kafkaClient');
 exports.createConnection = async (req, res) => {
+    //firstly connect producer to kafka borker so it will send notificarions to them
+    initProducer();
+
     const { requesterId, receiverId } = requesterId.body;
-    const producer = kafka.producer();
+    // const producer = kafka.producer();
     try {
         //i think creating a connection is not too much high throughput based task so i can add connection details in database like postgres
         const connection = await prisma.connection.create({
