@@ -28,7 +28,7 @@ exports.createConnection = async (req, res) => {
         await prisma.notification.create({
             data: {
                 userId: receiverId,
-                typr: 'connectionRequest',
+                type: 'connectionRequest',
                 content: `User ${requesterId} sent you a connection request`
             }
         });
