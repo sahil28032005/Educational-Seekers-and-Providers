@@ -1,5 +1,5 @@
 const { Server } = require("socket.io");
-const { kafka, consumer } = require("./config/kafkaClient");
+// const { kafka, consumer } = require("./config/kafkaClient");
 const { redis } = require('./config/reddisClient');
 //function will receive express server as an oaram
 const startSocketServer = (server) => {

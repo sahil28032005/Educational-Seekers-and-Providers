@@ -11,6 +11,8 @@ const server = http.createServer(app);
 //start websocket server
 const io = startSocketServer(server);
 
+console.log("socker server initialized success and got io instance....");
+
 //now we have actulla websocket instance
 
 //inttialize kafka consumer as this is entry point to application
