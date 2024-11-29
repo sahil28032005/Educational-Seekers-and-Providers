@@ -18,10 +18,10 @@ const startSocketServer = (server) => {
 
     //remove user
     const removeUser = (socketId) => {
-        redisClient.keys("user:*", (err, keys) => {
+        redis.keys("user:*", (err, keys) => {
             if (err) return console.error(err);
             keys.forEach((key) => {
-                redisClient.get(key, (err, value) => {
+                redis.get(key, (err, value) => {
                     if (value === socketId) {
                         redis.del(key);
                         console.log(`Removed user with socket ID: ${socketId}`);
@@ -55,7 +55,6 @@ const startSocketServer = (server) => {
         }
         console.log(`Authenticated user ${userId}`);
 
-        return;
         //here handle socket events
 
         //firstly fetch users pending as user is offline till now and her arrived online
@@ -76,6 +75,9 @@ const startSocketServer = (server) => {
             //add user record as where connections are bring managerd
             addUser(userId, socket.id); //i think reddis is good for amanaging volatiel connections ststuses and registrations as thhey are gonna temprory registrations
             console.log(`User ${userId} registered with socket ID: ${socket.id}`);
+
+            // Notify the client
+            socket.emit('registered', { success: true, message: "User registered successfully." });
         });
         //manage disconnection events
         socket.on('disconnect', function () {

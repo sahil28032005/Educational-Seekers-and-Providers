@@ -5,13 +5,14 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"; // ShadCN 
 import { io } from 'socket.io-client';  // Import socket.io-client
 import { useState } from "react";
 import { jwtDecode } from 'jwt-decode';
-
+import { useNavigate } from "react-router";
 
 
 import axios from "axios"; // Import axios for making requests
 import "./Login.css"; // Assuming you have a separate CSS file for styles
 
 const Login = () => {
+    let navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -47,7 +48,10 @@ const Login = () => {
             const decodedToken = jwtDecode(token);
             const userId = decodedToken.userId;
 
-            console.log("decoded at client side",userId);
+            //store userId also in localstorage
+            localStorage.setItem("userId", userId);
+
+            console.log("decoded at client side", userId);
 
             // You can process the response as needed, e.g., storing the token
             console.log("Logged in user ID:", userId); // Now you can use the userId
@@ -61,9 +65,22 @@ const Login = () => {
             socket.on('connect', () => {
                 console.log('Socket connection successful');
 
-                // Navigate to the main page after successful connection
-                navigate("/main"); // Replace "/main" with your actual route
+                //after successful connectition call register event for same user as we have to keep track in redis of currentl online users
+                // Emit the 'register' event after successful connection
+                socket.emit('register', userId); // Pass the userId to register the user
+                console.log(`Registering user with ID: ${userId}`);
 
+                // Listen for the server response
+                socket.on('registered', (response) => {
+                    if (response.success) {
+                        console.log('User registered successfully:', response.message);
+                        navigate("/"); // Redirect to main page
+                    } else {
+                        console.error('Registration failed:', response.message);
+                        setError('Registration failed. Please try again.');
+                    }
+                });
+            
                 // You can now listen for other socket events (e.g., notifications)
                 socket.on('notification', (message) => {
                     console.log("Notification:", message);

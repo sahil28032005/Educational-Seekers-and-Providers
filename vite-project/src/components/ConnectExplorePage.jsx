@@ -32,20 +32,13 @@ const ConnectExplorePage = () => {
     const [showToast, setShowToast] = useState(false);
     const [connections, setConnections] = useState([
         {
-            id: 1,
-            name: 'John Doe',
-            role: 'Software Engineer',
-            description: 'Building scalable applications.',
-            profileImage: 'https://via.placeholder.com/100',
-            status: 'Connect',
-        },
-        {
             id: 2,
             name: 'Jane Smith',
             role: 'UI/UX Designer',
             description: 'Designing user-centric experiences.',
             profileImage: 'https://via.placeholder.com/100',
             status: 'Connect',
+            receiverId: 2, // Added receiverId
         },
         {
             id: 3,
@@ -54,8 +47,19 @@ const ConnectExplorePage = () => {
             description: 'Turning data into insights.',
             profileImage: 'https://via.placeholder.com/100',
             status: 'Connect',
+            receiverId: 3, // Added receiverId
+        },
+        {
+            id: 4,
+            name: 'Michael Brown',
+            role: 'DevOps Engineer',
+            description: 'Ensuring smooth CI/CD pipelines.',
+            profileImage: 'https://via.placeholder.com/100',
+            status: 'Connect',
+            receiverId: 4, // Added receiverId
         },
     ]);
+
 
     const handleExploreClick = () => {
         setShowToast(true);
