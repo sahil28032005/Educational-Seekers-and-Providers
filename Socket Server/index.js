@@ -9,9 +9,9 @@ const app = express();
 const server = http.createServer(app);
 
 //start websocket server
-const io = startSocketServer(server);
+const io = startSocketServer(server); //after this call user will connected to socket server and able to access his socket events
 
-console.log("socker server initialized success and got io instance....");
+console.log("socket server initialized success and got io instance....");
 
 //now we have actulla websocket instance
 

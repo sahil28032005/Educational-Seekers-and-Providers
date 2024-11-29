@@ -22,7 +22,7 @@ const startSocketServer = (server) => {
             keys.forEach((key) => {
                 redisClient.get(key, (err, value) => {
                     if (value === socketId) {
-                        redisClient.del(key);
+                        redis.del(key);
                         console.log(`Removed user with socket ID: ${socketId}`);
                     }
                 });
@@ -33,6 +33,9 @@ const startSocketServer = (server) => {
     //manage connection and socket instances
     io.on('connection',async function (socket) {
         console.log("user connected with socket id: " + socket.id);
+
+        //take handshake data here such as an userId and his tokens
+        const userId = socket.handshake.query.userId;
 
         //here handle socket events
 

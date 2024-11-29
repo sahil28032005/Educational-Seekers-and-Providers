@@ -24,21 +24,22 @@ const initConsumer = async (io) => {
             console.log(`Received message: ${value}`);
 
             //this point is on load and has too much notification traffice it have to distribute this notification by classifying to specific user
-            // const notification = JSON.parse(value);
-            // const { receiverId, content } = notification;
+            const notification = JSON.parse(value);
+            const { receiverId, content } = notification;
 
-            // redis.get(`user:${receiverId}`, async(err, socketId) => {
-            //     if (err) return console.error(err);
-            //     if (socketId) {
-            //         io.to(socketId).emit("notification", content);
-            //         console.log(`Sent notification to user ${userId}: ${content}`);
-            //     } else {
-            //         console.log(`User ${userId} is not online`);
-            //         //here we need some storage for storing pending notificaion to send when user will come online he will receive that
-            //         await redisClient.lpush(`pending:notifications:${userId}`, JSON.stringify(notification));
-            //         console.log(`Saved notification for user ${userId}`);
-            //     }
-            // });
+            redis.get(`user:${receiverId}`, async(err, socketId) => {
+                if (err) return console.error(err);
+                if (socketId) {
+                    console.log("found online!");
+                    io.to(socketId).emit("notification", content);
+                    console.log(`Sent notification to user ${receiverId}: ${content}`);
+                } else {
+                    console.log(`User ${receiverId} is not online`);
+                    //here we need some storage for storing pending notificaion to send when user will come online he will receive that
+                    await redis.lpush(`pending:notifications:${receiverId}`, JSON.stringify(notification));
+                    console.log(`Saved notification for user ${receiverId}`);
+                }
+            });
 
         },
     })
