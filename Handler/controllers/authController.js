@@ -1,6 +1,7 @@
 const prisma = require('../config/prismaClient');
 const bcrypt = require('bcrypt');
-const prisma = require("../config/prismaClient");
+const jwt = require('jsonwebtoken');
+
 require('dotenv').config();
 async function checkConnection() {
     try {
@@ -42,7 +43,7 @@ exports.register = async (req, res) => {
             data: {
                 name,
                 email,
-                password: hashedPassword,
+                password: hashedPass,
                 role,
                 location,
                 expertise,

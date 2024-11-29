@@ -1,0 +1,104 @@
+/* General Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f9f9f9;
+}
+
+.signup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+.signup-card {
+  width: 100%;
+  max-width: 450px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0px 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+.signup-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+/* Form Styles */
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #4B4B4B;
+  margin-bottom: 8px;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  font-size: 16px;
+  padding: 12px;
+  border: 1px solid #e2e2e2;
+  border-radius: 8px;
+  transition: border-color 0.3s ease;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  border-color: #4CAF50;
+  outline: none;
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: none;
+}
+
+/* Button Styles */
+.submit-btn {
+  padding: 12px;
+  background-color: #4CAF50;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+  background-color: #45a049;
+}
+
+.submit-btn:active {
+  background-color: #388e3c;
+}
+
+/* Responsive Styles */
+@media (max-width: 600px) {
+  .signup-card {
+      width: 100%;
+      padding: 16px;
+  }
+}
