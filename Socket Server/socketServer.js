@@ -1,6 +1,7 @@
 const { Server } = require("socket.io");
 // const { kafka, consumer } = require("./config/kafkaClient");
 const { redis } = require('./config/reddisClient');
+const jwt = require("jsonwebtoken"); // Required for JWT validation
 //function will receive express server as an oaram
 const startSocketServer = (server) => {
 
@@ -31,12 +32,30 @@ const startSocketServer = (server) => {
     };
 
     //manage connection and socket instances
-    io.on('connection',async function (socket) {
+    io.on('connection', async function (socket) {
         console.log("user connected with socket id: " + socket.id);
 
         //take handshake data here such as an userId and his tokens
-        const userId = socket.handshake.query.userId;
+        const { userId, token } = socket.handshake.query;
+        const parsedUserId = parseInt(userId, 10); // Use base 10 to avoid unintended behavior.
+        console.log("userId: " + userId);
+        console.log("token: " + token);
+        // Validate the token and authenticate the user
+        if (!token || !userId) {
+            socket.disconnect();
+            console.log("Missing userId or token. Disconnected.");
+            return;
+        }
+        const decoded = jwt.verify(token, 'asjiye7638'); // Replace with your secret key
+        console.log("after decode by method: " + decoded.userId);
+        if (decoded.userId !== parsedUserId) {
+            socket.disconnect();
+            console.log("User ID mismatch. Disconnected.");
+            return;
+        }
+        console.log(`Authenticated user ${userId}`);
 
+        return;
         //here handle socket events
 
         //firstly fetch users pending as user is offline till now and her arrived online
