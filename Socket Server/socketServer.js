@@ -83,6 +83,9 @@ const startSocketServer = (server) => {
         socket.on('disconnect', function () {
             console.log("user disconnected with socket id: " + socket.id);
             removeUser(socket.id);
+
+            //emit an logout event and rempove that user form localstorage and treat that user as offline
+            socket.emit('logout', { message: "You have been logged out due to disconnection." });
         });
     });
 

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"; // ShadCN 
 import { Textarea } from "@/components/ui/textarea"; // ShadCN Textarea component
 import { useState } from "react";
 import "./SignUpPage.css"; // Assuming CSS file for styles
+import axios from "axios";
 
 const SignUp = () => {
     const [formData, setFormData] = useState({
@@ -25,9 +26,20 @@ const SignUp = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         console.log('Form submitted with:', formData);
+        try {
+            const response = await axios.post("http://localhost:4000/register", formData, {
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+            console.log("Registration successful:", response.data);
+        }
+        catch (e) {
+            console.error("Error during registration:", e.message);
+        }
     };
 
     const handleExpertiseChange = (e) => {

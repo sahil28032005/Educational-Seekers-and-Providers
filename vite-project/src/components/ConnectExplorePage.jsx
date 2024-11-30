@@ -1,69 +1,75 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Toast } from '@/components/ui/toast';
-import { useState } from 'react';
-import './ConnectExplorePage.css';
-import FiltersPage from './FiltersPage';
-import ConnectionCard from './ConnectionCard';
-const ConnectExplorePage = () => {
-    const handleConnect = (id) => {
-        setConnections((prevConnections) =>
-            prevConnections.map((connection) =>
-                connection.id === id
-                    ? {
-                        ...connection,
-                        status: connection.status === 'Connect' ? 'Request Sent' : 'Connected',
-                    }
-                    : connection
-            )
-        );
-    };
-    const demoUser = {
-        id: 1,
-        name: 'John Doe', // Full name of the user
-        role: 'Full Stack Developer', // User's professional role
-        description: 'Passionate about building scalable and robust web applications.', // Short bio
-        profileImage: 'https://via.placeholder.com/150', // Profile image URL
-        status: 'Connect', // Initial status of the connection
-    };
+import React, { useState } from "react";
+import axios from "axios";
+import { Button } from "@/components/ui/button";
+import { Card, CardTitle, CardDescription } from "@/components/ui/card";
+import { Toast } from "@/components/ui/toast";
+import FiltersPage from "./FiltersPage";
+import ConnectionCard from "./ConnectionCard";
+import "./ConnectExplorePage.css";
 
+const ConnectExplorePage = () => {
     const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState("");
     const [connections, setConnections] = useState([
         {
             id: 2,
-            name: 'Jane Smith',
-            role: 'UI/UX Designer',
-            description: 'Designing user-centric experiences.',
-            profileImage: 'https://via.placeholder.com/100',
-            status: 'Connect',
-            receiverId: 2, // Added receiverId
+            name: "Jane Smith",
+            role: "UI/UX Designer",
+            description: "Designing user-centric experiences.",
+            profileImage: "https://via.placeholder.com/100",
+            status: "Connect",
+            receiverId: 2,
         },
         {
             id: 3,
-            name: 'Alice Johnson',
-            role: 'Data Scientist',
-            description: 'Turning data into insights.',
-            profileImage: 'https://via.placeholder.com/100',
-            status: 'Connect',
-            receiverId: 3, // Added receiverId
+            name: "Alice Johnson",
+            role: "Data Scientist",
+            description: "Turning data into insights.",
+            profileImage: "https://via.placeholder.com/100",
+            status: "Connect",
+            receiverId: 3,
         },
         {
             id: 4,
-            name: 'Michael Brown',
-            role: 'DevOps Engineer',
-            description: 'Ensuring smooth CI/CD pipelines.',
-            profileImage: 'https://via.placeholder.com/100',
-            status: 'Connect',
-            receiverId: 4, // Added receiverId
+            name: "Michael Brown",
+            role: "DevOps Engineer",
+            description: "Ensuring smooth CI/CD pipelines.",
+            profileImage: "https://via.placeholder.com/100",
+            status: "Connect",
+            receiverId: 4,
         },
     ]);
 
+    const handleConnect = async (id, receiverId) => {
+        try {
+            // Update UI state to "Request Sent" optimistically
+            setConnections((prevConnections) =>
+                prevConnections.map((connection) =>
+                    connection.id === id
+                        ? { ...connection, status: "Request Sent" }
+                        : connection
+                )
+            );
 
-    const handleExploreClick = () => {
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000); // Hide the toast after 3 seconds
+            // Send connection request to backend
+            const response = await axios.post("http://localhost:4000/connect", {
+                requesterId: "1", // Replace with the actual requester ID
+                receiverId: receiverId,
+            });
+
+            if (response.data.success) {
+                setToastMessage("Connection request sent successfully!");
+            } else {
+                throw new Error(response.data.message || "Unknown error");
+            }
+        } catch (error) {
+            console.error("Failed to send connection request:", error);
+            setToastMessage("Failed to send connection request. Please try again.");
+        } finally {
+            // Show toast notification
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000); // Auto-hide toast
+        }
     };
 
     return (
@@ -77,66 +83,20 @@ const ConnectExplorePage = () => {
                     <p className="text-lg sm:text-xl mb-10">
                         Explore the world’s most innovative projects, connect with inspiring people, and fuel your creativity.
                     </p>
-                    <Button className="bg-blue-700 hover:bg-blue-800 text-white text-lg py-3 px-6 rounded-full shadow-lg" onClick={handleExploreClick}>
+                    <Button
+                        className="bg-blue-700 hover:bg-blue-800 text-white text-lg py-3 px-6 rounded-full shadow-lg"
+                        onClick={() => {
+                            setToastMessage("Welcome to the Explorer!");
+                            setShowToast(true);
+                            setTimeout(() => setShowToast(false), 3000);
+                        }}
+                    >
                         Start Exploring
                     </Button>
                 </div>
             </section>
 
-            {/* Features Section */}
-            <section className="py-20 bg-white">
-                <div className="max-w-screen-xl mx-auto px-6 text-center">
-                    <h2 className="text-3xl font-bold mb-12">Why Explore?</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
-                        {/* Feature Cards */}
-                        {[
-                            { title: 'Discover New Projects', description: 'Find innovative projects that align with your interests.' },
-                            { title: 'Connect with People', description: 'Engage with a global community of like-minded individuals.' },
-                            { title: 'Get Inspired', description: 'Unlock your creativity by exploring exciting ideas.' },
-                        ].map((feature, index) => (
-                            <div key={index} className="text-center space-y-4">
-                                <Card className="bg-white shadow-md hover:shadow-xl transition-all duration-300">
-                                    <CardTitle className="text-xl font-semibold text-gray-800 mb-2">{feature.title}</CardTitle>
-                                    <CardDescription className="text-gray-600">{feature.description}</CardDescription>
-                                </Card>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Explore Section */}
-            <section className="py-20 bg-gray-100">
-                <div className="max-w-screen-xl mx-auto px-6">
-                    <h2 className="text-3xl font-bold text-center mb-12">Featured Projects to Explore</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
-                        {[1, 2, 3, 4, 5, 6].map((item, index) => (
-                            <div key={index} className="group hover:scale-105 transition-all duration-300">
-                                <Card className="shadow-lg hover:shadow-2xl transition-shadow duration-300">
-                                    <CardDescription>
-                                        <h3 className="text-lg font-semibold text-gray-800">Project {item}</h3>
-                                        <p className="text-gray-600">
-                                            An exciting project to explore. Learn about its features and how you can get involved.
-                                        </p>
-                                    </CardDescription>
-                                    <Button className="bg-blue-600 hover:bg-blue-700 text-white mt-4">
-                                        Explore Now
-                                    </Button>
-                                </Card>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Toast Notification */}
-            {showToast && (
-                <Toast>
-                    <p className="text-white font-semibold">Welcome to the Explorer!</p>
-                </Toast>
-            )}
-
-            {/* filters */}
+            {/* Filters and Connections */}
             <FiltersPage />
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 bg-gray-50">
                 {connections.map((user) => (
@@ -147,11 +107,17 @@ const ConnectExplorePage = () => {
                         description={user.description}
                         profileImage={user.profileImage}
                         status={user.status}
-                        onConnect={() => handleConnect(user.id)}
+                        onConnect={() => handleConnect(user.id, user.receiverId)}
                     />
                 ))}
             </div>
 
+            {/* Toast Notification */}
+            {showToast && (
+                <Toast>
+                    <p className="text-white font-semibold">{toastMessage}</p>
+                </Toast>
+            )}
         </div>
     );
 };

@@ -80,7 +80,18 @@ const Login = () => {
                         setError('Registration failed. Please try again.');
                     }
                 });
-            
+
+                //for log out user by removing their cookies and metadata
+                socket.on('logout', (data) => {
+                    console.log(data.message); // Log the server's message
+                    // Clear userId and token from localStorage
+                    localStorage.removeItem("userId");
+                    localStorage.removeItem("token");
+
+                    // Optionally, redirect the user to the login page
+                    navigate("/login");
+                });
+
                 // You can now listen for other socket events (e.g., notifications)
                 socket.on('notification', (message) => {
                     console.log("Notification:", message);
