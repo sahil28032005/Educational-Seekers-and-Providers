@@ -6,6 +6,9 @@ import { io } from 'socket.io-client';  // Import socket.io-client
 import { useState } from "react";
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from "react-router";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';  // Import the default styling
+
 
 
 import axios from "axios"; // Import axios for making requests
@@ -95,6 +98,9 @@ const Login = () => {
                 // You can now listen for other socket events (e.g., notifications)
                 socket.on('notification', (message) => {
                     console.log("Notification:", message);
+                    setTimeout(() => {
+                        toast.success(message); // Display success message
+                    }, 4000); // 4-second delay
                 });
             });
 
@@ -153,6 +159,15 @@ const Login = () => {
                     {error && <p className="error-message">{error}</p>}
                 </CardContent>
             </Card>
+
+            <ToastContainer
+                position="top-right"   // Position of the toast notifications
+                autoClose={5000}       // Duration for each toast to stay visible (in ms)
+                hideProgressBar={false}  // Whether to show a progress bar
+                newestOnTop={true}        // Whether to show the newest toast on top
+                closeOnClick={true}       // Close the toast when clicked
+                rtl={false}               // Set to true if you're using right-to-left text
+            />
         </div>
     );
 };

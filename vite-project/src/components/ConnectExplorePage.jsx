@@ -1,15 +1,14 @@
 import React, { useState } from "react";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';  // Import the default styling
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
-import { Toast } from "@/components/ui/toast";
 import FiltersPage from "./FiltersPage";
 import ConnectionCard from "./ConnectionCard";
 import "./ConnectExplorePage.css";
 
 const ConnectExplorePage = () => {
-    const [showToast, setShowToast] = useState(false);
-    const [toastMessage, setToastMessage] = useState("");
     const [connections, setConnections] = useState([
         {
             id: 2,
@@ -58,17 +57,17 @@ const ConnectExplorePage = () => {
             });
 
             if (response.data.success) {
-                setToastMessage("Connection request sent successfully!");
+                toast.success("Connection request sent successfully!");  // Success toast
             } else {
                 throw new Error(response.data.message || "Unknown error");
             }
         } catch (error) {
             console.error("Failed to send connection request:", error);
-            setToastMessage("Failed to send connection request. Please try again.");
+
         } finally {
             // Show toast notification
-            setShowToast(true);
-            setTimeout(() => setShowToast(false), 3000); // Auto-hide toast
+
+
         }
     };
 
@@ -86,9 +85,7 @@ const ConnectExplorePage = () => {
                     <Button
                         className="bg-blue-700 hover:bg-blue-800 text-white text-lg py-3 px-6 rounded-full shadow-lg"
                         onClick={() => {
-                            setToastMessage("Welcome to the Explorer!");
-                            setShowToast(true);
-                            setTimeout(() => setShowToast(false), 3000);
+
                         }}
                     >
                         Start Exploring
@@ -111,13 +108,15 @@ const ConnectExplorePage = () => {
                     />
                 ))}
             </div>
+            <ToastContainer
+                position="top-right"   // Position of the toast notifications
+                autoClose={5000}       // Duration for each toast to stay visible (in ms)
+                hideProgressBar={false}  // Whether to show a progress bar
+                newestOnTop={true}        // Whether to show the newest toast on top
+                closeOnClick={true}       // Close the toast when clicked
+                rtl={false}               // Set to true if you're using right-to-left text
+            />
 
-            {/* Toast Notification */}
-            {showToast && (
-                <Toast>
-                    <p className="text-white font-semibold">{toastMessage}</p>
-                </Toast>
-            )}
         </div>
     );
 };
