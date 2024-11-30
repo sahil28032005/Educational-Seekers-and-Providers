@@ -99,6 +99,37 @@ const sendNotification = async (topic, message) => {
     }
 }
 
+//get prnding requests in seperate section
+
+exports.getPendingConnections = async () => {
+    try {
+        const userId = request.user.id; //expects userId in the middleware
+
+        //fetch prmding request for logged user
+        const pendingConnections = await prisma.connection.findMany({
+            where: {
+                receiverId: userId,
+                status: 'pending',
+            },
+            include: {
+                User: true, //as this is not necessary yet
+            }
+        });
+
+        res.status(200).send({
+            success: true,
+            data: pendingConnections
+        });
+
+
+    }
+    catch (err) {
+        res.status(404).send({
+            success: false,
+            message: 'failed to fetch pending connections'
+        });
+    }
+}
 // (async () => {
 //     const producer = kafka.producer();
 //     await producer.connect();
