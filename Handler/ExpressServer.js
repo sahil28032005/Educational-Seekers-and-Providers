@@ -1,5 +1,5 @@
 const express = require('express');
-const { createConnection,getPendingConnections } = require("./controllers/connectionController");
+const { createConnection, getPendingConnections } = require("./controllers/connectionController");
 const { register, login, getProfile } = require("./controllers/authController");
 const authMiddleware = require("./middlewares/authMiddleware");
 var cors = require('cors');
@@ -12,7 +12,7 @@ const port = 4000;
 app.use(express.json());
 
 app.post("/connect", createConnection);
-app.get('/pending', getPendingConnections);
+app.get('/pending', authMiddleware, getPendingConnections);
 
 //auth routes specific
 app.post('/register', register);
