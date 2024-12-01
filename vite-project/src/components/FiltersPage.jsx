@@ -10,6 +10,7 @@ const FiltersPage = ({ onFilterApply }) => {
   const [location, setLocation] = useState("");
   const [minBudget, setMinBudget] = useState("");
   const [maxBudget, setMaxBudget] = useState("");
+  const [username, setUsername] = useState(""); // State for username
 
   const handleFilterSubmit = () => {
     // Prepare the filters object
@@ -18,6 +19,7 @@ const FiltersPage = ({ onFilterApply }) => {
       ...(location && { location }),
       ...(minBudget && { minBudget }),
       ...(maxBudget && { maxBudget }),
+      ...(username && { username }), // Add username to filters
     };
 
     // Pass the filters to the parent component
@@ -27,6 +29,17 @@ const FiltersPage = ({ onFilterApply }) => {
   return (
     <div className="filter-container p-6 rounded-lg shadow-lg bg-white">
       <h2 className="text-xl font-semibold mb-4">Filter Options</h2>
+
+      {/* Username Filter */}
+      <div className="mb-4">
+        <Label>Username:</Label>
+        <Input
+          className="mt-2"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Enter username"
+        />
+      </div>
 
       {/* Role Filter */}
       <div className="mb-4">

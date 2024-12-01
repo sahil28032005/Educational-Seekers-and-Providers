@@ -1,11 +1,10 @@
 // Import Prisma Client
 const prisma = require('../config/prismaClient');
 
-// Controller for filtering users
 // exports.getFilteredConnections = async (req, res) => {
 //     try {
 //         // Extract filters from the query parameters
-//         const { role, location, minBudget, maxBudget } = req.query;
+//         const { role, location, minBudget, maxBudget, excludeUserId } = req.query;
 
 //         // Build dynamic `where` filters
 //         const filters = {
@@ -13,6 +12,7 @@ const prisma = require('../config/prismaClient');
 //             ...(location && { location: { contains: location, mode: 'insensitive' } }),
 //             ...(minBudget && { budget: { gte: parseFloat(minBudget) } }),
 //             ...(maxBudget && { budget: { lte: parseFloat(maxBudget) } }),
+//             ...(excludeUserId && { id: { not: parseInt(excludeUserId) } }),  // Exclude current user
 //         };
 
 //         // Fetch connections based on filters
@@ -42,10 +42,11 @@ const prisma = require('../config/prismaClient');
 //         });
 //     }
 // };
+
 exports.getFilteredConnections = async (req, res) => {
     try {
         // Extract filters from the query parameters
-        const { role, location, minBudget, maxBudget, excludeUserId } = req.query;
+        const { role, location, minBudget, maxBudget, excludeUserId, username } = req.query;
 
         // Build dynamic `where` filters
         const filters = {
@@ -53,7 +54,8 @@ exports.getFilteredConnections = async (req, res) => {
             ...(location && { location: { contains: location, mode: 'insensitive' } }),
             ...(minBudget && { budget: { gte: parseFloat(minBudget) } }),
             ...(maxBudget && { budget: { lte: parseFloat(maxBudget) } }),
-            ...(excludeUserId && { id: { not: parseInt(excludeUserId) } }),  // Exclude current user
+            ...(excludeUserId && { id: { not: parseInt(excludeUserId) } }), // Exclude current user
+            ...(username && { name: { contains: username, mode: 'insensitive' } }), // Filter by username
         };
 
         // Fetch connections based on filters
