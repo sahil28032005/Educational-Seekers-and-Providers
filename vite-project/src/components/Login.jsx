@@ -97,10 +97,11 @@ const Login = () => {
 
                 // You can now listen for other socket events (e.g., notifications)
                 socket.on('notification', (message) => {
-                    console.log("Notification:", message);
-                    setTimeout(() => {
-                        toast.success(message); // Display success message
-                    }, 4000); // 4-second delay
+                    // console.log("Notification:", message);
+                    // setTimeout(() => {
+                    //     toast.success(message); // Display success message
+                    // }, 4000); // 4-second delay
+                    toast.success(message); 
                 });
             });
 

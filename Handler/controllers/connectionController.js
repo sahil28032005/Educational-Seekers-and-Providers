@@ -8,21 +8,21 @@ exports.createConnection = async (req, res) => {
     // const producer = kafka.producer();
     try {
         //i think creating a connection is not too much high throughput based task so i can add connection details in database like postgres
-        // const connection = await prisma.connection.create({
-        //     data: {
-        //         requesterId,
-        //         receiverId
-        //     }
-        // });
+        const connection = await prisma.connection.create({
+            data: {
+                requesterId,
+                receiverId
+            }
+        });
 
 
         //here suppose connection to be created now send throughput using high thhroughput services like kafka reddis pub sub or rabbit mq or bull mq etc..
-        await sendNotification('connection-status', {
-            type: 'connectionRequest',
-            requesterId,
-            receiverId,
-            content: `User ${requesterId} sent you a connection request`,
-        });
+        // await sendNotification('connection-status', {
+        //     type: 'connectionRequest',
+        //     requesterId,
+        //     receiverId,
+        //     content: `User ${requesterId} sent you a connection request`,
+        // });
 
         //it will be an real time notification as connection was made store its entry in database also as it will be low prioritized
         // await prisma.notification.create({
@@ -36,7 +36,7 @@ exports.createConnection = async (req, res) => {
         res.status(201).send({
             success: true,
             message: 'connection request was sent',
-            // data: connection
+            data: connection
         });
     }
     catch (err) {

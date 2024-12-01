@@ -64,11 +64,11 @@ const startSocketServer = (server) => {
         // Send pending notifications
         pendingNotifications.forEach((notif) => {
             const parsedNotif = JSON.parse(notif);
-            socket.emit("notification", parsedNotif.content);
+            setTimeout(() => { socket.emit("notification", parsedNotif.content); }, 4000);
         });
 
         // Clear the pending notifications list
-        await redis.del(`pending:notifications:${userId}`);
+        redis.del(`pending:notifications:${userId}`);
 
         //when user connects to socket register him
         socket.on("register", function (userId) {
