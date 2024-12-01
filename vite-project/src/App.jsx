@@ -6,6 +6,7 @@ import SignUpPage from './components/SignUpPage';
 import Login from './components/Login';
 import { useSocket } from "./utils/keepConnected";
 import { ToastProvider } from "@/components/ui/toast";
+import PendingRequestsPage from './components/pendingRequestsPage';
 function App() {
   const [count, setCount] = useState(0);
 
@@ -26,6 +27,7 @@ function App() {
             <Route path="/" element={<ConnectExplorePage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/pending" element={<PendingRequestsPage />} />
           </Routes>
           <footer className="bg-blue-600 text-white py-10 text-center">
             <p>&copy; 2024 YourBrand. All rights reserved.</p>

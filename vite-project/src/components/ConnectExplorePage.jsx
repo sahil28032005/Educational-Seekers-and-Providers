@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';  // Import the default styling
 import axios from "axios";
@@ -9,35 +9,89 @@ import ConnectionCard from "./ConnectionCard";
 import "./ConnectExplorePage.css";
 
 const ConnectExplorePage = () => {
-    const [connections, setConnections] = useState([
-        {
-            id: 2,
-            name: "Jane Smith",
-            role: "UI/UX Designer",
-            description: "Designing user-centric experiences.",
-            profileImage: "https://via.placeholder.com/100",
-            status: "Connect",
-            receiverId: 2,
-        },
-        {
-            id: 3,
-            name: "Alice Johnson",
-            role: "Data Scientist",
-            description: "Turning data into insights.",
-            profileImage: "https://via.placeholder.com/100",
-            status: "Connect",
-            receiverId: 3,
-        },
-        {
-            id: 4,
-            name: "Michael Brown",
-            role: "DevOps Engineer",
-            description: "Ensuring smooth CI/CD pipelines.",
-            profileImage: "https://via.placeholder.com/100",
-            status: "Connect",
-            receiverId: 4,
-        },
-    ]);
+    const [connections, setConnections] = useState([]);  // Start with an empty array for connections
+    const userId = localStorage.getItem('userId');
+    const fetchConnections = async () => {
+        try {
+            console.log('Fetching connections');
+            const userId = localStorage.getItem('userId');  // Get the current user's ID from localStorage
+
+            if (!userId) {
+                console.error("User ID is not available in localStorage");
+                return;
+            }
+
+            // Make a request to the backend to fetch all users excluding the current user
+            const response = await axios.get("http://localhost:4000/filter", {
+                params: { excludeUserId: userId },  // Send the current user ID to exclude it
+            });
+
+            // Update state with the filtered connections (excluding the current user)
+            setConnections(response.data.data);
+        } catch (error) {
+            console.error("Error fetching connections:", error);
+        }
+    };
+
+
+    // const [connections, setConnections] = useState([
+    //     {
+    //         id: 2,
+    //         name: "Jane Smith",
+    //         role: "UI/UX Designer",
+    //         description: "Designing user-centric experiences.",
+    //         profileImage: "https://via.placeholder.com/100",
+    //         status: "Connect",
+    //         receiverId: 2,
+    //     },
+    //     {
+    //         id: 3,
+    //         name: "Alice Johnson",
+    //         role: "Data Scientist",
+    //         description: "Turning data into insights.",
+    //         profileImage: "https://via.placeholder.com/100",
+    //         status: "Connect",
+    //         receiverId: 3,
+    //     },
+    //     {
+    //         id: 4,
+    //         name: "Michael Brown",
+    //         role: "DevOps Engineer",
+    //         description: "Ensuring smooth CI/CD pipelines.",
+    //         profileImage: "https://via.placeholder.com/100",
+    //         status: "Connect",
+    //         receiverId: 4,
+    //     },
+    // ]);
+
+    // filters applier
+    const handleFilterApply = async (filters) => {
+        try {
+            // Retrieve the userId from localStorage
+            const userId = localStorage.getItem('userId');  // Assuming 'userId' is the key in localStorage
+
+            // Check if userId exists in localStorage
+            if (!userId) {
+                console.error("User ID is not available in localStorage");
+                return;  // Optionally handle this case (e.g., redirect or show a message)
+            }
+
+            // Make the request with the filters and exclude the current user
+            const response = await axios.get("http://localhost:4000/filter", {
+                params: {
+                    ...filters,
+                    excludeUserId: userId,  // Pass the userId from localStorage
+                },
+            });
+
+            // Update the state with filtered connections
+            setConnections(response.data.data);
+        } catch (error) {
+            console.error("Failed to fetch filtered connections:", error);
+        }
+    };
+
+
 
     const handleConnect = async (id, receiverId) => {
         try {
@@ -69,7 +123,12 @@ const ConnectExplorePage = () => {
 
 
         }
+
     };
+    // Empty dependency array to run only once when the component mounts
+    useEffect(() => {
+        fetchConnections();
+    }, []);
 
     return (
         <div className="min-h-screen bg-gray-50 font-sans">
@@ -94,7 +153,7 @@ const ConnectExplorePage = () => {
             </section>
 
             {/* Filters and Connections */}
-            <FiltersPage />
+            <FiltersPage onFilterApply={handleFilterApply} />
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 bg-gray-50">
                 {connections.map((user) => (
                     <ConnectionCard
@@ -103,8 +162,8 @@ const ConnectExplorePage = () => {
                         role={user.role}
                         description={user.description}
                         profileImage={user.profileImage}
-                        status={user.status}
-                        onConnect={() => handleConnect(user.id, user.receiverId)}
+                        status="connect"
+                        onConnect={() => handleConnect(userId, user.id)}
                     />
                 ))}
             </div>

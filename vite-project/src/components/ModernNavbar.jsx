@@ -17,6 +17,7 @@ const ModernNavbar = () => {
           <a href="/" className="text-gray-800 hover:text-blue-500">Home</a>
           <a href="/explore" className="text-gray-800 hover:text-blue-500">Explore</a>
           <a href="/about" className="text-gray-800 hover:text-blue-500">About</a>
+          <a href="/pending" className="block hover:text-blue-500">Pending</a>
         </div>
 
         {/* Mobile Menu Button */}
@@ -43,6 +44,7 @@ const ModernNavbar = () => {
           <a href="/" className="block hover:text-blue-500">Home</a>
           <a href="/explore" className="block hover:text-blue-500">Explore</a>
           <a href="/about" className="block hover:text-blue-500">About</a>
+          <a href="/pending" className="block hover:text-blue-500">Pending Requests</a>
         </div>
       )}
     </nav>

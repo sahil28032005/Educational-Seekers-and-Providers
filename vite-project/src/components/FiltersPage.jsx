@@ -1,57 +1,86 @@
-// src/components/Filter.jsx
-
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";  // Corrected import path
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";  // Corrected import path
+import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
 
-const Filter = ({ onFilterApply }) => {
-  const [searchText, setSearchText] = useState("");
-  const [category, setCategory] = useState("");
-  const [isFree, setIsFree] = useState(false);
+const FiltersPage = ({ onFilterApply }) => {
+  const [role, setRole] = useState("");
+  const [location, setLocation] = useState("");
+  const [minBudget, setMinBudget] = useState("");
+  const [maxBudget, setMaxBudget] = useState("");
 
   const handleFilterSubmit = () => {
-    onFilterApply({ searchText, category, isFree });
+    // Prepare the filters object
+    const filters = {
+      ...(role && { role }),
+      ...(location && { location }),
+      ...(minBudget && { minBudget }),
+      ...(maxBudget && { maxBudget }),
+    };
+
+    // Pass the filters to the parent component
+    onFilterApply(filters);
   };
 
   return (
     <div className="filter-container p-6 rounded-lg shadow-lg bg-white">
       <h2 className="text-xl font-semibold mb-4">Filter Options</h2>
 
+      {/* Role Filter */}
       <div className="mb-4">
-        <Label>Search:</Label>
-        <Input
-          className="mt-2"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          placeholder="Search by name or topic"
-        />
-      </div>
-
-      <div className="mb-4">
-        <Label>Category:</Label>
-        <Select value={category} onValueChange={setCategory}>
+        <Label>Role:</Label>
+        <Select value={role} onValueChange={setRole}>
           <SelectTrigger className="mt-2">
-            <SelectValue placeholder="Select category" />
+            <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="technology">Technology</SelectItem>
-            <SelectItem value="science">Science</SelectItem>
-            <SelectItem value="education">Education</SelectItem>
+            <SelectItem value="Developer">Developer</SelectItem>
+            <SelectItem value="Designer">Designer</SelectItem>
+            <SelectItem value="Data Scientist">Data Scientist</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="mb-4 flex items-center">
-        <Checkbox checked={isFree} onCheckedChange={(checked) => setIsFree(checked)} />
-        <Label className="ml-2">Free Only</Label>
+      {/* Location Filter */}
+      <div className="mb-4">
+        <Label>Location:</Label>
+        <Input
+          className="mt-2"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          placeholder="Enter location"
+        />
       </div>
 
-      <Separator className="my-4" /> {/* Adding a separator between filter sections */}
+      {/* Budget Filters */}
+      <div className="mb-4 grid grid-cols-2 gap-4">
+        <div>
+          <Label>Min Budget:</Label>
+          <Input
+            className="mt-2"
+            type="number"
+            value={minBudget}
+            onChange={(e) => setMinBudget(e.target.value)}
+            placeholder="Minimum"
+          />
+        </div>
+        <div>
+          <Label>Max Budget:</Label>
+          <Input
+            className="mt-2"
+            type="number"
+            value={maxBudget}
+            onChange={(e) => setMaxBudget(e.target.value)}
+            placeholder="Maximum"
+          />
+        </div>
+      </div>
 
+      <Separator className="my-4" />
+
+      {/* Apply Filters Button */}
       <div className="mt-4">
         <Button onClick={handleFilterSubmit} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
           Apply Filters
@@ -61,4 +90,4 @@ const Filter = ({ onFilterApply }) => {
   );
 };
 
-export default Filter;
+export default FiltersPage;

@@ -3,10 +3,41 @@ const { kafka, producer, initProducer } = require('../config/kafkaClient');
 exports.createConnection = async (req, res) => {
     //firstly connect producer to kafka borker so it will send notificarions to them
     initProducer();
-
+    
+    
     const { requesterId, receiverId } = req.body;
     // const producer = kafka.producer();
     try {
+
+        //first send notification
+         //here suppose connection to be created now send throughput using high thhroughput services like kafka reddis pub sub or rabbit mq or bull mq etc..
+        await sendNotification('connection-status', {
+            type: 'connectionRequest',
+            requesterId,
+            receiverId,
+            content: `User ${requesterId} sent you a connection request`,
+        });
+
+        //first check is this erquest already present in records 
+        // Check if a connection already exists between the requester and receiver
+        const existingConnection = await prisma.connection.findFirst({
+            where: {
+                requesterId,
+                receiverId,
+            },
+        });
+
+        if (existingConnection) {
+            // Log that the connection request already exists
+            console.log(`Connection request already exists between user ${requesterId} and user ${receiverId}`);
+
+            // Skip creating the connection and just return a success message
+            return res.status(200).send({
+                success: true,
+                message: 'Connection request already exists',
+            });
+        }
+        // otherwise make connectiion recors to keep track of connections
         //i think creating a connection is not too much high throughput based task so i can add connection details in database like postgres
         const connection = await prisma.connection.create({
             data: {
@@ -15,14 +46,19 @@ exports.createConnection = async (req, res) => {
             }
         });
 
+        //update connection state as request sent
 
-        //here suppose connection to be created now send throughput using high thhroughput services like kafka reddis pub sub or rabbit mq or bull mq etc..
-        // await sendNotification('connection-status', {
-        //     type: 'connectionRequest',
-        //     requesterId,
-        //     receiverId,
-        //     content: `User ${requesterId} sent you a connection request`,
-        // });
+
+        // Now retrieve the connection with associated User data
+        const populatedConnection = await prisma.connection.findUnique({
+            where: { id: connection.id }, // Find the created connection by its ID
+            include: {
+                User: true, // Include the related User data (requester)
+            },
+        });
+
+
+       
 
         //it will be an real time notification as connection was made store its entry in database also as it will be low prioritized
         // await prisma.notification.create({
@@ -101,9 +137,9 @@ const sendNotification = async (topic, message) => {
 
 //get prnding requests in seperate section
 
-exports.getPendingConnections = async () => {
+exports.getPendingConnections = async (req, res) => {
     try {
-        const userId = request.user.id; //expects userId in the middleware
+        const userId = req.userId; //expects userId in the middleware
 
         //fetch prmding request for logged user
         const pendingConnections = await prisma.connection.findMany({
@@ -126,7 +162,8 @@ exports.getPendingConnections = async () => {
     catch (err) {
         res.status(404).send({
             success: false,
-            message: 'failed to fetch pending connections'
+            message: 'failed to fetch pending connections',
+            err: err.message
         });
     }
 }

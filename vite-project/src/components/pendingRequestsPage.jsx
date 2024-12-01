@@ -1,8 +1,8 @@
 // src/components/pages/PendingRequestsPage.jsx
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input"; // Assuming Input is already set up in your components
-import { Card } from "shadcn-ui";
-import styles from "../styles/PendingRequests.css"; // Assuming CSS modules
+import { Card } from "@/components/ui/card";
+import styles from './PendingRequests.module.css';// Assuming CSS modules
 import axios from "axios";
 
 const PendingRequestsPage = () => {
@@ -17,7 +17,7 @@ const PendingRequestsPage = () => {
       try {
         const response = await axios.get("http://localhost:4000/pending", {
           headers: {
-            Authorization: `Bearer YOUR_JWT_TOKEN`, // Replace with your JWT token
+            Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsImVtYWlsIjoiamFuZUBleGFtcGxlLmNvbSIsImlhdCI6MTczMzAzOTE2NywiZXhwIjoxNzMzMDQyNzY3fQ.PruSQzYjtRsszmTFq7Zi7JpcLfb2OCO44WJNt-8Bl5A`, // Replace with your JWT token
           },
         });
         setRequests(response.data.data); // Set the fetched data
