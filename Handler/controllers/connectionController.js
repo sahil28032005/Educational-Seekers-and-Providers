@@ -3,27 +3,41 @@ const { kafka, producer, initProducer } = require('../config/kafkaClient');
 exports.createConnection = async (req, res) => {
     //firstly connect producer to kafka borker so it will send notificarions to them
     initProducer();
-    
-    
+
+
     const { requesterId, receiverId } = req.body;
     // const producer = kafka.producer();
     try {
 
         //first send notification
-         //here suppose connection to be created now send throughput using high thhroughput services like kafka reddis pub sub or rabbit mq or bull mq etc..
-        await sendNotification('connection-status', {
-            type: 'connectionRequest',
-            requesterId,
-            receiverId,
-            content: `User ${requesterId} sent you a connection request`,
+        //here suppose connection to be created now send throughput using high thhroughput services like kafka reddis pub sub or rabbit mq or bull mq etc..
+        const requester = await prisma.user.findUnique({
+            where: {
+                id: parseInt(requesterId), // the requester's ID (usually passed as a variable)
+            },
         });
+
+        console.log("requester", requester);
+
+        if (requester) {
+            await sendNotification('connection-status', {
+                type: 'connectionRequest',
+                requesterId,
+                receiverId,
+                content: `User ${requester.name} sent you a connection request`,
+            });
+        }
+        else {
+            console.log("user not found");
+        }
+
 
         //first check is this erquest already present in records 
         // Check if a connection already exists between the requester and receiver
         const existingConnection = await prisma.connection.findFirst({
             where: {
-                requesterId,
-                receiverId,
+                requesterId: parseInt(requesterId, 10),
+                receiverId: parseInt(receiverId, 10),
             },
         });
 
@@ -41,8 +55,8 @@ exports.createConnection = async (req, res) => {
         //i think creating a connection is not too much high throughput based task so i can add connection details in database like postgres
         const connection = await prisma.connection.create({
             data: {
-                requesterId,
-                receiverId
+                requesterId: parseInt(requesterId, 10),
+                receiverId: parseInt(receiverId, 10)
             }
         });
 
@@ -58,7 +72,7 @@ exports.createConnection = async (req, res) => {
         });
 
 
-       
+
 
         //it will be an real time notification as connection was made store its entry in database also as it will be low prioritized
         // await prisma.notification.create({

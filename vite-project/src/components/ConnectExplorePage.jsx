@@ -103,10 +103,11 @@ const ConnectExplorePage = () => {
                         : connection
                 )
             );
+            const userId = localStorage.getItem('userId');
 
             // Send connection request to backend
             const response = await axios.post("http://localhost:4000/connect", {
-                requesterId: "1", // Replace with the actual requester ID
+                requesterId: userId, // Replace with the actual requester ID
                 receiverId: receiverId,
             });
 
