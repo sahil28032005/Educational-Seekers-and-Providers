@@ -1,101 +1,107 @@
 import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';  // Import the default styling
+import 'react-toastify/dist/ReactToastify.css';
 import axios from "axios";
-import { Button } from "@/components/ui/button";
-import { Card, CardTitle, CardDescription } from "@/components/ui/card";
-import FiltersPage from "./FiltersPage";
-import ConnectionCard from "./ConnectionCard";
+import HeroSection from "./HeroSection";
+import Navbar from "./dashboard/Navbar";
+import Sidebar from "./dashboard/Sidebar";
+import DashboardContent from "./dashboard/DashboardContent";
+import CommunityContent from "./dashboard/CommunityContent";
+import { getDefaultAvatar } from "../utils/avatarUtils";
 import "./ConnectExplorePage.css";
+import ExploreContent from "./dashboard/ExploreContent";
+import GroupsContent from "./dashboard/GroupsContent";
 
 const ConnectExplorePage = () => {
-    const [connections, setConnections] = useState([]);  // Start with an empty array for connections
+    const defaultAvatar = getDefaultAvatar();
+    const [connections, setConnections] = useState([]);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState("dashboard"); // "dashboard", "community", etc.
     const userId = localStorage.getItem('userId');
+    const userName = localStorage.getItem('userName') || 'Student';
+    const [groups, setGroups] = useState([]);
+    const [userGroups, setUserGroups] = useState([]);
+    const [groupSuggestions, setGroupSuggestions] = useState([]);
+    
+    // Fetch connections logic
     const fetchConnections = async () => {
         try {
             console.log('Fetching connections');
-            const userId = localStorage.getItem('userId');  // Get the current user's ID from localStorage
+            const userId = localStorage.getItem('userId');
 
             if (!userId) {
                 console.error("User ID is not available in localStorage");
                 return;
             }
 
-            // Make a request to the backend to fetch all users excluding the current user
             const response = await axios.get("http://localhost:4000/filter", {
-                params: { excludeUserId: userId },  // Send the current user ID to exclude it
+                params: { excludeUserId: userId },
             });
 
-            // Update state with the filtered connections (excluding the current user)
             setConnections(response.data.data);
         } catch (error) {
             console.error("Error fetching connections:", error);
         }
     };
 
-
-    // const [connections, setConnections] = useState([
-    //     {
-    //         id: 2,
-    //         name: "Jane Smith",
-    //         role: "UI/UX Designer",
-    //         description: "Designing user-centric experiences.",
-    //         profileImage: "https://via.placeholder.com/100",
-    //         status: "Connect",
-    //         receiverId: 2,
-    //     },
-    //     {
-    //         id: 3,
-    //         name: "Alice Johnson",
-    //         role: "Data Scientist",
-    //         description: "Turning data into insights.",
-    //         profileImage: "https://via.placeholder.com/100",
-    //         status: "Connect",
-    //         receiverId: 3,
-    //     },
-    //     {
-    //         id: 4,
-    //         name: "Michael Brown",
-    //         role: "DevOps Engineer",
-    //         description: "Ensuring smooth CI/CD pipelines.",
-    //         profileImage: "https://via.placeholder.com/100",
-    //         status: "Connect",
-    //         receiverId: 4,
-    //     },
-    // ]);
-
-    // filters applier
-    const handleFilterApply = async (filters) => {
+    // Fetch groups
+    const fetchGroups = async () => {
         try {
-            // Retrieve the userId from localStorage
-            const userId = localStorage.getItem('userId');  // Assuming 'userId' is the key in localStorage
-
-            // Check if userId exists in localStorage
-            if (!userId) {
-                console.error("User ID is not available in localStorage");
-                return;  // Optionally handle this case (e.g., redirect or show a message)
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error("Authentication token not found");
+                return;
             }
 
-            // Make the request with the filters and exclude the current user
+            // Fetch all groups
+            const allGroupsResponse = await axios.get("http://localhost:4000/api/groups", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setGroups(allGroupsResponse.data.data || []);
+
+            // Fetch user's groups
+            const userGroupsResponse = await axios.get("http://localhost:4000/api/groups/user", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setUserGroups(userGroupsResponse.data.data || []);
+
+            // Fetch group suggestions
+            const suggestionsResponse = await axios.get("http://localhost:4000/api/groups/suggestions", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setGroupSuggestions(suggestionsResponse.data.data || []);
+        } catch (error) {
+            console.error("Error fetching groups:", error);
+            toast.error("Failed to load groups");
+        }
+    };
+
+    // Handle filter apply
+    const handleFilterApply = async (filters) => {
+        try {
+            const userId = localStorage.getItem('userId');
+
+            if (!userId) {
+                console.error("User ID is not available in localStorage");
+                return;
+            }
+
             const response = await axios.get("http://localhost:4000/filter", {
                 params: {
                     ...filters,
-                    excludeUserId: userId,  // Pass the userId from localStorage
+                    excludeUserId: userId,
                 },
             });
 
-            // Update the state with filtered connections
             setConnections(response.data.data);
         } catch (error) {
             console.error("Failed to fetch filtered connections:", error);
         }
     };
 
-
-
+    // Handle connect
     const handleConnect = async (id, receiverId) => {
         try {
-            // Update UI state to "Request Sent" optimistically
             setConnections((prevConnections) =>
                 prevConnections.map((connection) =>
                     connection.id === id
@@ -105,79 +111,144 @@ const ConnectExplorePage = () => {
             );
             const userId = localStorage.getItem('userId');
 
-            // Send connection request to backend
             const response = await axios.post("http://localhost:4000/connect", {
-                requesterId: userId, // Replace with the actual requester ID
+                requesterId: userId,
                 receiverId: receiverId,
             });
 
             if (response.data.success) {
-                toast.success("Connection request sent successfully!");  // Success toast
+                toast.success("Connection request sent successfully!");
             } else {
                 throw new Error(response.data.message || "Unknown error");
             }
         } catch (error) {
             console.error("Failed to send connection request:", error);
-
-        } finally {
-            // Show toast notification
-
-
         }
-
     };
-    // Empty dependency array to run only once when the component mounts
+
+    // Handle create group
+    const handleCreateGroup = async (groupData) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                toast.error("You must be logged in to create a group");
+                return;
+            }
+
+            const response = await axios.post(
+                "http://localhost:4000/api/groups",
+                groupData,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (response.data.success) {
+                toast.success("Group created successfully!");
+                fetchGroups(); // Refresh groups list
+            }
+        } catch (error) {
+            console.error("Failed to create group:", error);
+            toast.error(error.response?.data?.message || "Failed to create group");
+        }
+    };
+
+    // Handle join group
+    const handleJoinGroup = async (groupId) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                toast.error("You must be logged in to join a group");
+                return;
+            }
+
+            const response = await axios.post(
+                `http://localhost:4000/api/groups/${groupId}/join`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (response.data.success) {
+                toast.success("Joined group successfully!");
+                fetchGroups(); // Refresh groups list
+            }
+        } catch (error) {
+            console.error("Failed to join group:", error);
+            toast.error(error.response?.data?.message || "Failed to join group");
+        }
+    };
+
+    // Fetch connections on component mount
     useEffect(() => {
         fetchConnections();
     }, []);
 
-    return (
-        <div className="min-h-screen bg-gray-50 font-sans">
-            {/* Hero Section */}
-            <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-24 text-center">
-                <div className="max-w-screen-xl mx-auto px-6">
-                    <h1 className="text-4xl sm:text-5xl font-extrabold mb-6">
-                        Discover Endless Possibilities
-                    </h1>
-                    <p className="text-lg sm:text-xl mb-10">
-                        Explore the world’s most innovative projects, connect with inspiring people, and fuel your creativity.
-                    </p>
-                    <Button
-                        className="bg-blue-700 hover:bg-blue-800 text-white text-lg py-3 px-6 rounded-full shadow-lg"
-                        onClick={() => {
+    // Fetch groups when the active tab is "groups"
+    useEffect(() => {
+        if (activeTab === "groups") {
+            fetchGroups();
+        }
+    }, [activeTab]);
 
-                        }}
-                    >
-                        Start Exploring
-                    </Button>
-                </div>
-            </section>
-
-            {/* Filters and Connections */}
-            <FiltersPage onFilterApply={handleFilterApply} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-6 bg-gray-50">
-                {connections.map((user) => (
-                    <ConnectionCard
-                        key={user.id}
-                        name={user.name}
-                        role={user.role}
-                        description={user.description}
-                        profileImage={user.profileImage}
-                        status="connect"
-                        onConnect={() => handleConnect(userId, user.id)}
+    // Render the appropriate content based on active tab
+    const renderContent = () => {
+        switch (activeTab) {
+            case "dashboard":
+                return <DashboardContent userName={userName} />;
+            case "community":
+                return (
+                    <CommunityContent 
+                        connections={connections}
+                        userId={userId}
+                        defaultProfileImage={defaultAvatar.fallback}
+                        onConnect={handleConnect}
+                        onFilterApply={handleFilterApply}
                     />
-                ))}
-            </div>
-            <ToastContainer
-                position="top-right"   // Position of the toast notifications
-                autoClose={5000}       // Duration for each toast to stay visible (in ms)
-                hideProgressBar={false}  // Whether to show a progress bar
-                newestOnTop={true}        // Whether to show the newest toast on top
-                closeOnClick={true}       // Close the toast when clicked
-                rtl={false}               // Set to true if you're using right-to-left text
-            />
+                );
+            case "explore":
+                return <ExploreContent />;
+            case "groups":
+                return (
+                    <GroupsContent
+                        groups={groups}
+                        userGroups={userGroups}
+                        groupSuggestions={groupSuggestions}
+                        onCreateGroup={handleCreateGroup}
+                        onJoinGroup={handleJoinGroup}
+                        onRefreshGroups={fetchGroups}
+                    />
+                );
+            default:
+                return <div className="p-6">Content for {activeTab}</div>;
+        }
+    };
 
-        </div>
+    // Update the return statement in your ConnectExplorePage component
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Navbar 
+          onMenuClick={() => setIsSidebarOpen(true)} 
+          userAvatar={defaultAvatar.fallback}
+          userName={userName}
+        />
+        <Sidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
+        
+        <main className="flex-grow pt-16 md:pl-64 transition-all duration-300">
+          {renderContent()}
+        </main>
+        
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={true}
+          closeOnClick={true}
+          rtl={false}
+        />
+      </div>
     );
 };
 

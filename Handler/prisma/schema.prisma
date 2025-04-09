@@ -8,52 +8,92 @@ generator client {
 }
 
 model User {
-  id           Int            @id @default(autoincrement())
-  name         String
-  email        String         @unique
-  password     String
-  role         String
-  bio          String?
-  profileImg   String?
-  location     String
-  budget       Float?
-  expertise    String[]
-  connections  Connection[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  Notification Notification[]
-  SearchFilter SearchFilter[]
+  id                Int                 @id @default(autoincrement())
+  name              String
+  email             String              @unique
+  password          String
+  role              String
+  bio               String?
+  profileImg        String?
+  location          String
+  budget            Float?
+  expertise         String[]
+  status            String              @default("offline") // online, offline, away
+  lastActive        DateTime            @default(now())
+  // Connection relationships
+  sentConnections   Connection[]        @relation("SentConnections")
+  receivedConnections Connection[]      @relation("ReceivedConnections")
+  // Group relationships
+  memberOfGroups    GroupMember[]
+  createdGroups     Group[]             @relation("GroupCreator")
+  // Other relationships
+  notifications     Notification[]
+  searchFilters     SearchFilter[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 }
 
 model Connection {
-  id          Int    @id @default(autoincrement())
-  requesterId Int //user who sent the connection request
-  receiverId  Int //user who received connection request
-  status      String @default("pending") //it will be pemding,accepted,rejected
+  id          Int       @id @default(autoincrement())
+  requesterId Int
+  receiverId  Int
+  status      String    @default("pending") // pending, accepted, rejected, blocked
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Define proper relations with User model
+  requester   User      @relation("SentConnections", fields: [requesterId], references: [id])
+  receiver    User      @relation("ReceivedConnections", fields: [receiverId], references: [id])
+}
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      User?    @relation(fields: [requesterId], references: [id])
+model Group {
+  id          Int           @id @default(autoincrement())
+  name        String
+  description String?
+  category    String
+  imageUrl    String?
+  isPublic    Boolean       @default(true)
+  creatorId   Int
+  members     GroupMember[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  creator     User          @relation("GroupCreator", fields: [creatorId], references: [id])
+}
+
+model GroupMember {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  groupId   Int
+  role      String    @default("member") // member, admin, moderator
+  joinedAt  DateTime  @default(now())
+  
+  user      User      @relation(fields: [userId], references: [id])
+  group     Group     @relation(fields: [groupId], references: [id])
+  
+  @@unique([userId, groupId])
 }
 
 model Notification {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   userId    Int
-  type      String //like connectionrequest
-  content   String //message content
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
+  type      String    // connectionRequest, groupInvite, etc.
+  content   String
+  read      Boolean   @default(false)
+  metadata  Json?     // Additional data like connectionId, groupId, etc.
+  createdAt DateTime  @default(now())
+  
+  user      User      @relation(fields: [userId], references: [id])
 }
 
 model SearchFilter {
-  id         Int      @id @default(autoincrement())
-  userId     Int // User who saved this filter
-  courseType String? // Filter by course type
-  location   String? // Filter by location
-  budget     Float? // Filter by budget
-  createdAt  DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  courseType String?
+  location   String?
+  budget     Float?
+  expertise  String[]
+  createdAt  DateTime  @default(now())
+  
+  user       User      @relation(fields: [userId], references: [id])
 }
