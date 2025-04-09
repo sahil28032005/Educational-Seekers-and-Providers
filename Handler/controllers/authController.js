@@ -24,9 +24,10 @@ const generateToken = (userId) => {
 }
 
 //register new user
+//register new user
 exports.register = async (req, res) => {
     try {
-        const { name, email, password, role, location, expertise } = req.body;
+        const { name, email, password, role = "user", location, expertise } = req.body;
 
         //check for existing user with arrived details
         // Check if user already exists
@@ -44,15 +45,15 @@ exports.register = async (req, res) => {
                 name,
                 email,
                 password: hashedPass,
-                role,
-                location,
-                expertise,
+                role: role || "user", // Provide default role if not specified
+                location: location || "", // Handle null values
+                 expertise: expertise ? [expertise] : [], // Convert to array or use empty array
             },
         });
 
         res.status(200).send({
             success: true,
-            message: 'user registered successgully'
+            message: 'user registered successfully'
         });
     }
     catch (err) {
