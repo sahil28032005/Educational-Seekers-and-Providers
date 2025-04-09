@@ -2,6 +2,19 @@ const express = require('express');
 const { createConnection, getPendingConnections } = require("./controllers/connectionController");
 const { getFilteredConnections } = require("./controllers/filtersConntroller");
 const { register, login, getProfile } = require("./controllers/authController");
+const { 
+    createGroup, 
+    getAllGroups, 
+    getGroupById, 
+    joinGroup, 
+    leaveGroup, 
+    getUserGroups, 
+    updateGroup, 
+    deleteGroup, 
+    changeMemberRole, 
+    removeMember, 
+    getGroupSuggestions 
+} = require("./controllers/groupController");
 const authMiddleware = require("./middlewares/authMiddleware");
 var cors = require('cors');
 
@@ -23,6 +36,18 @@ app.post('/register', register);
 app.post('/login', login);
 app.get('/profile', authMiddleware, getProfile);
 
+// Group routes
+app.post('/api/groups', authMiddleware, createGroup);
+app.get('/api/groups', getAllGroups);
+app.get('/api/groups/user', authMiddleware, getUserGroups);
+app.get('/api/groups/suggestions', authMiddleware, getGroupSuggestions);
+app.get('/api/groups/:groupId', getGroupById);
+app.put('/api/groups/:groupId', authMiddleware, updateGroup);
+app.delete('/api/groups/:groupId', authMiddleware, deleteGroup);
+app.post('/api/groups/:groupId/join', authMiddleware, joinGroup);
+app.delete('/api/groups/:groupId/leave', authMiddleware, leaveGroup);
+app.patch('/api/groups/:groupId/members/:memberId/role', authMiddleware, changeMemberRole);
+app.delete('/api/groups/:groupId/members/:memberId', authMiddleware, removeMember);
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
