@@ -1,20 +1,57 @@
-const { Kafka } = require("kafkajs");
+const { Kafka } = require('kafkajs');
 
-//make configuration for kafka client
-const config = {
-    clientId: 'my-app-ownmade',
+// Create Kafka instance
+const kafka = new Kafka({
+    clientId: 'educational-seekers',
     brokers: ['localhost:9092']
-}
-const kafka = new Kafka(config);
+});
 
-const producer=kafka.producer();
+// Initialize producer
+let producer = null;
 
-const initProducer=async()=>{
-    await producer.connect();
-    console.log('kafka producer connected successfully to kafka broker');
-}
+// Function to initialize producer
+const initProducer = async () => {
+    try {
+        if (!producer) {
+            producer = kafka.producer();
+            await producer.connect();
+            console.log('Kafka producer connected successfully');
+        }
+        return producer;
+    } catch (error) {
+        console.error('Failed to connect Kafka producer:', error);
+        producer = null;
+        return {
+            send: async () => console.warn('Kafka unavailable, message not sent'),
+            disconnect: async () => {}
+        };
+    }
+};
 
-//make producer for test 
-module.exports={kafka,producer,initProducer};
+// Function to publish events
+const publishEvent = async (data) => {
+    try {
+        const currentProducer = await initProducer();
+        if (!currentProducer) {
+            console.warn('No Kafka producer available');
+            return;
+        }
+
+        await currentProducer.send({
+            topic: 'my-topic',  // Using the existing topic
+            messages: [{ value: JSON.stringify(data) }]
+        });
+        console.log(`Event published to my-topic:`, data);
+    } catch (error) {
+        console.warn(`Failed to publish event:`, error.message);
+    }
+};
+
+module.exports = {
+    kafka,
+    producer,
+    initProducer,
+    publishEvent
+};
 
 

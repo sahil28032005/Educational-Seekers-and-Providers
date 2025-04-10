@@ -25,7 +25,7 @@ export const useSocket = () => {
                 newSocket.on("registered", (response) => {
                     if (response.success) {
                         console.log("User registered successfully:", response.message);
-                        navigate("/"); // Redirect to main page
+                        // Don't navigate here, it can cause issues
                     } else {
                         console.error("Registration failed:", response.message);
                         setError("Registration failed. Please try again.");
@@ -37,10 +37,8 @@ export const useSocket = () => {
                 console.log("Socket connection error:", error);
             });
 
-            // Example event listeners
-            newSocket.on("notification", (message) => {
-                console.log("Notification:", message);
-            });
+            // Remove the notification listener from here
+            // Let SocketNotificationListener handle this
 
             setSocket(newSocket);
 
@@ -52,5 +50,5 @@ export const useSocket = () => {
         }
     }, [navigate]);
 
-    return { socket, error };
+    return socket; // Just return the socket object directly
 };
