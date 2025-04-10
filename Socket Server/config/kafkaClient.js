@@ -1,7 +1,6 @@
 const { Kafka } = require("kafkajs");
 const { redis } = require("./reddisClient");
 
-//make configuration for kafka client
 const config = {
     clientId: 'my-app-ownmade',
     brokers: ['localhost:9092']
@@ -10,42 +9,55 @@ const kafka = new Kafka(config);
 
 const consumer = kafka.consumer({ groupId: 'notification-group' });
 
-//this function will take socket instance to emit message ater cime as we have to send message to particular user
 const initConsumer = async (io) => {
     await consumer.connect();
-    console.log('consumer is in touch with kafka brocker and trying to suscribe...');
-    await consumer.subscribe({ topic: 'connection-status', fromBeginning: false });
-    console.log("suscribed to notification receiver channel");
+    console.log('consumer is in touch with kafka broker and trying to subscribe...');
+    await consumer.subscribe({ topic: 'my-topic', fromBeginning: false });
+    console.log("subscribed to my-topic channel");
 
-    //run consumer to receive actual notifcations real time
     await consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
             const value = message.value.toString();
             console.log(`Received message: ${value}`);
 
-            //this point is on load and has too much notification traffice it have to distribute this notification by classifying to specific user
             const notification = JSON.parse(value);
-            const { receiverId, content } = notification;
+            const { receiverId } = notification;
 
             redis.get(`user:${receiverId}`, async(err, socketId) => {
                 if (err) return console.error(err);
                 if (socketId) {
                     console.log("found online!");
-                    io.to(socketId).emit("notification", content);
-                    console.log(`Sent notification to user ${receiverId}: ${content}`);
+                    // Send a more structured notification event
+                    io.to(socketId).emit("notification", {
+                        toastType: 'success',
+                        title: notification.notification?.title || 'New Connection Request',
+                        message: notification.notification?.message || 'Someone wants to connect with you',
+                        position: "top-right",
+                        autoClose: 5000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        data: {
+                            connectionId: notification.id,
+                            requester: notification.requesterDetails,
+                            status: notification.status,
+                            createdAt: notification.createdAt
+                        }
+                    });
+                    console.log(`Sent notification to user ${receiverId}`);
                 } else {
                     console.log(`User ${receiverId} is not online`);
-                    //here we need some storage for storing pending notificaion to send when user will come online he will receive that
-                    await redis.lpush(`pending:notifications:${receiverId}`, JSON.stringify(notification));
-                    console.log(`Saved notification for user ${receiverId}`);
+                    await redis.lpush(`pending:notifications:${receiverId}`, JSON.stringify({
+                        ...notification,
+                        timestamp: new Date().toISOString()
+                    }));
                 }
             });
-
         },
-    })
-}
+    });
+};
 
-//make producer for test 
 module.exports = { kafka, consumer, initConsumer };
 
 

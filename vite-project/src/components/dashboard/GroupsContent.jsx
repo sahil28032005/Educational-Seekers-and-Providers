@@ -75,7 +75,7 @@ const GroupsContent = ({
   // Leave a group
   const handleLeaveGroup = async (groupId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       if (!token) {
         toast.error("Authentication required");
         return;

@@ -47,27 +47,27 @@ const ConnectExplorePage = () => {
     // Fetch groups
     const fetchGroups = async () => {
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
                 console.error("Authentication token not found");
                 return;
             }
 
             // Fetch all groups
             const allGroupsResponse = await axios.get("http://localhost:4000/api/groups", {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${authToken}` }
             });
             setGroups(allGroupsResponse.data.data || []);
 
             // Fetch user's groups
             const userGroupsResponse = await axios.get("http://localhost:4000/api/groups/user", {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${authToken}` }
             });
             setUserGroups(userGroupsResponse.data.data || []);
 
             // Fetch group suggestions
             const suggestionsResponse = await axios.get("http://localhost:4000/api/groups/suggestions", {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${authToken}` }
             });
             setGroupSuggestions(suggestionsResponse.data.data || []);
         } catch (error) {
@@ -129,8 +129,8 @@ const ConnectExplorePage = () => {
     // Handle create group
     const handleCreateGroup = async (groupData) => {
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
                 toast.error("You must be logged in to create a group");
                 return;
             }
@@ -138,7 +138,7 @@ const ConnectExplorePage = () => {
             const response = await axios.post(
                 "http://localhost:4000/api/groups",
                 groupData,
-                { headers: { Authorization: `Bearer ${token}` } }
+                { headers: { Authorization: `Bearer ${authToken}` } }
             );
 
             if (response.data.success) {
@@ -154,8 +154,8 @@ const ConnectExplorePage = () => {
     // Handle join group
     const handleJoinGroup = async (groupId) => {
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
+            const authToken = localStorage.getItem('authToken');
+            if (!authToken) {
                 toast.error("You must be logged in to join a group");
                 return;
             }
@@ -163,7 +163,7 @@ const ConnectExplorePage = () => {
             const response = await axios.post(
                 `http://localhost:4000/api/groups/${groupId}/join`,
                 {},
-                { headers: { Authorization: `Bearer ${token}` } }
+                { headers: { Authorization: `Bearer ${authToken}` } }
             );
 
             if (response.data.success) {

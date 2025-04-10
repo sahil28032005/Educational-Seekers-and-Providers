@@ -64,7 +64,20 @@ const startSocketServer = (server) => {
         // Send pending notifications
         pendingNotifications.forEach((notif) => {
             const parsedNotif = JSON.parse(notif);
-            setTimeout(() => { socket.emit("notification", parsedNotif.content); }, 4000);
+            setTimeout(() => { 
+                socket.emit("notification", {
+                    toastType: 'success',
+                    title: parsedNotif.notification?.title || 'Pending Notification',
+                    message: parsedNotif.notification?.message || 'You have a pending notification',
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    data: parsedNotif.data
+                }); 
+            }, 4000);
         });
 
         // Clear the pending notifications list
