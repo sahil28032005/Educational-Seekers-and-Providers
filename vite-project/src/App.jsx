@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ConnectExplorePage from './components/ConnectExplorePage';
 import SignUpPage from './components/SignUpPage';
@@ -35,17 +35,40 @@ function App() {
     </>
   )
 }
-
-// Separate component to use hooks that require Router context
+// In your AppContent function
 function AppContent() {
   const socket = useSocket();
+  
+  // Add a useEffect to handle socket registration
+  useEffect(() => {
+    if (socket) {
+      const userId = localStorage.getItem("userId");
+      if (userId) {
+        console.log("Registering user with socket server:", userId);
+        socket.emit("register", userId);
+        
+        // Listen for registration confirmation
+        socket.on("registered", (response) => {
+          if (response.success) {
+            console.log("Socket registration successful:", response.message);
+          } else {
+            console.error("Socket registration failed:", response.message);
+          }
+        });
+      }
+    }
+    
+    return () => {
+      if (socket) {
+        socket.off("registered");
+      }
+    };
+  }, [socket]);
   
   return (
     <div className="flex flex-col min-h-screen">
       {/* Only render SocketNotificationListener if socket is valid */}
-      {socket && typeof socket.on === 'function' && (
-        <SocketNotificationListener socket={socket} />
-      )}
+      {socket && <SocketNotificationListener socket={socket} />}
       
       <div className="flex-grow">
         <Routes>

@@ -12,37 +12,32 @@ export const useSocket = () => {
         const userId = localStorage.getItem("userId");
 
         if (token && userId) {
+            console.log("Creating socket connection with userId:", userId);
             const newSocket = io("http://localhost:3000", {
                 query: { userId, token }
             });
 
             newSocket.on("connect", () => {
-                console.log("Socket reconnected successfully.");
-                newSocket.emit("register", userId); // Pass the userId to register the user
-                console.log(`Registering user with ID: ${userId}`);
-
-                // Listen for the server response
-                newSocket.on("registered", (response) => {
-                    if (response.success) {
-                        console.log("User registered successfully:", response.message);
-                        // Don't navigate here, it can cause issues
-                    } else {
-                        console.error("Registration failed:", response.message);
-                        setError("Registration failed. Please try again.");
-                    }
-                });
+                console.log("Socket connected successfully with ID:", newSocket.id);
             });
 
             newSocket.on("connect_error", (error) => {
                 console.log("Socket connection error:", error);
+                setError("Connection error. Please try again.");
             });
 
-            // Remove the notification listener from here
-            // Let SocketNotificationListener handle this
+            // Handle logout event from server
+            newSocket.on("logout", (message) => {
+                console.log("Received logout event:", message);
+                localStorage.removeItem("authToken");
+                localStorage.removeItem("userId");
+                navigate("/login");
+            });
 
             setSocket(newSocket);
 
             return () => {
+                console.log("Disconnecting socket");
                 newSocket.disconnect();
             };
         } else {
@@ -50,5 +45,5 @@ export const useSocket = () => {
         }
     }, [navigate]);
 
-    return socket; // Just return the socket object directly
+    return socket;
 };
