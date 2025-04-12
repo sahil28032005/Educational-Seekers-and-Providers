@@ -1,18 +1,14 @@
-import { Button } from "@/components/ui/button";  // Assuming you're using ShadCN Button
-import { Input } from "@/components/ui/input";    // ShadCN Input component
-import { Label } from "@/components/ui/label";    // ShadCN Label component
-import { Card, CardContent, CardHeader } from "@/components/ui/card"; // ShadCN Card components
-import { io } from 'socket.io-client';  // Import socket.io-client
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useState } from "react";
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from "react-router";
 import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';  // Import the default styling
-
-
-
-import axios from "axios"; // Import axios for making requests
-import "./Login.css"; // Assuming you have a separate CSS file for styles
+import 'react-toastify/dist/ReactToastify.css';
+import axios from "axios";
+import "./Login.css";
 
 const Login = () => {
     let navigate = useNavigate();
@@ -21,9 +17,9 @@ const Login = () => {
         password: ''
     });
 
-    const [loading, setLoading] = useState(false); // Track loading state
-    const [error, setError] = useState(null); // Track error state
-    const [success, setSuccess] = useState(null); // Track success state
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -35,83 +31,43 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);  // Set loading state to true while making the request
+        setLoading(true);
 
         try {
             // Making a POST request using axios
             const response = await axios.post('http://localhost:4000/login', formData);
 
             // Handle success
-            setLoading(false);  // Set loading to false when the request is complete
-            setSuccess("Login successful!"); // Update the success state
+            setLoading(false);
+            setSuccess("Login successful!");
+            
+            // Store token and extract userId
             const token = response.data.token;
             localStorage.setItem("authToken", token);
 
-            // Decode the token to get the userId
-            const decodedToken = jwtDecode(token);
-            const userId = decodedToken.userId;
+            // Get userId from response if available, otherwise decode from token
+            let userId;
+            if (response.data.userId) {
+                userId = response.data.userId;
+            } else {
+                // Decode the token to get the userId
+                const decodedToken = jwtDecode(token);
+                userId = decodedToken.userId;
+            }
 
-            //store userId also in localstorage
+            // Store userId in localStorage
             localStorage.setItem("userId", userId);
-
-            console.log("decoded at client side", userId);
-
-            // You can process the response as needed, e.g., storing the token
-            console.log("Logged in user ID:", userId); // Now you can use the userId
-
-            //make user online by connnecting with socket server 
-            const socket = io("http://localhost:3000", {
-                query: { userId, token } // Pass both userId and token in the query parameters
-            });
-
-            //listem on socket events
-            socket.on('connect', () => {
-                console.log('Socket connection successful');
-
-                //after successful connectition call register event for same user as we have to keep track in redis of currentl online users
-                // Emit the 'register' event after successful connection
-                socket.emit('register', userId); // Pass the userId to register the user
-                console.log(`Registering user with ID: ${userId}`);
-
-                // Listen for the server response
-                socket.on('registered', (response) => {
-                    if (response.success) {
-                        console.log('User registered successfully:', response.message);
-                        navigate("/"); // Redirect to main page
-                    } else {
-                        console.error('Registration failed:', response.message);
-                        setError('Registration failed. Please try again.');
-                    }
-                });
-
-                //for log out user by removing their cookies and metadata
-                socket.on('logout', (data) => {
-                    console.log(data.message); // Log the server's message
-                    // Clear userId and token from localStorage
-                    localStorage.removeItem("userId");
-                    localStorage.removeItem("token");
-
-                    // Optionally, redirect the user to the login page
-                    navigate("/login");
-                });
-
-                // You can now listen for other socket events (e.g., notifications)
-                socket.on('notification', (message) => {
-                    // console.log("Notification:", message);
-                    // setTimeout(() => {
-                    //     toast.success(message); // Display success message
-                    // }, 4000); // 4-second delay
-                    toast.success(message); 
-                });
-            });
-
-            // Handle socket connection error
-            socket.on('connect_error', (error) => {
-                console.log('Socket connection error:', error);
-                setError('Unable to connect to the server. Please try again later.');
-            });
+            
+            console.log("Logged in user ID:", userId);
+            
+            // Instead of connecting to socket here, just navigate to home page
+            // The socket connection will be handled by the useSocket hook
+            setTimeout(() => {
+                navigate("/");
+            }, 1000);
+            
         } catch (error) {
-            setLoading(false);  // Set loading to false when the request fails
+            setLoading(false);
             setError(error.response?.data?.message || "An error occurred during login.");
         }
     };
@@ -162,12 +118,12 @@ const Login = () => {
             </Card>
 
             <ToastContainer
-                position="top-right"   // Position of the toast notifications
-                autoClose={5000}       // Duration for each toast to stay visible (in ms)
-                hideProgressBar={false}  // Whether to show a progress bar
-                newestOnTop={true}        // Whether to show the newest toast on top
-                closeOnClick={true}       // Close the toast when clicked
-                rtl={false}               // Set to true if you're using right-to-left text
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={true}
+                closeOnClick={true}
+                rtl={false}
             />
         </div>
     );
