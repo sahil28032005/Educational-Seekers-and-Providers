@@ -7,7 +7,7 @@ import Navbar from "./dashboard/Navbar";
 import Sidebar from "./dashboard/Sidebar";
 import DashboardContent from "./dashboard/DashboardContent";
 import CommunityContent from "./dashboard/CommunityContent";
-import { getDefaultAvatar } from "../utils/avatarUtils";
+import { getDefaultAvatar } from "../utils/avatarUtils"; // Updated import path
 import "./ConnectExplorePage.css";
 import ExploreContent from "./dashboard/ExploreContent";
 import GroupsContent from "./dashboard/GroupsContent";

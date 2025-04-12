@@ -2,6 +2,7 @@ const { Server } = require("socket.io");
 // const { kafka, consumer } = require("./config/kafkaClient");
 const { redis } = require('./config/reddisClient');
 const jwt = require("jsonwebtoken"); // Required for JWT validation
+
 //function will receive express server as an oaram
 const startSocketServer = (server) => {
 
@@ -35,71 +36,108 @@ const startSocketServer = (server) => {
     io.on('connection', async function (socket) {
         console.log("user connected with socket id: " + socket.id);
 
-        //take handshake data here such as an userId and his tokens
-        const { userId, token } = socket.handshake.query;
-        const parsedUserId = parseInt(userId, 10); // Use base 10 to avoid unintended behavior.
-        console.log("userId: " + userId);
-        console.log("token: " + token);
-        // Validate the token and authenticate the user
-        if (!token || !userId) {
+        try {
+            //take handshake data here such as an userId and his tokens
+            const { userId, token } = socket.handshake.query;
+            
+            // Check if token and userId exist
+            if (!token || !userId) {
+                socket.emit('auth_error', { message: 'Missing userId or token' });
+                socket.disconnect();
+                console.log("Missing userId or token. Disconnected.");
+                return;
+            }
+            
+            // Parse userId safely
+            const parsedUserId = parseInt(userId, 10); // Use base 10 to avoid unintended behavior.
+            console.log("userId: " + userId);
+            console.log("token: " + token);
+            
+            // Validate the token with error handling
+            try {
+                const decoded = jwt.verify(token, 'asjiye7638'); // Replace with your secret key
+                console.log("after decode by method: " + decoded.userId);
+                
+                if (decoded.userId !== parsedUserId) {
+                    socket.emit('auth_error', { message: 'User ID mismatch' });
+                    socket.disconnect();
+                    console.log("User ID mismatch. Disconnected.");
+                    return;
+                }
+                
+                console.log(`Authenticated user ${userId}`);
+                
+                //here handle socket events
+                
+                //firstly fetch users pending as user is offline till now and her arrived online
+                // Fetch pending notifications
+                const pendingNotifications = await redis.lrange(`pending:notifications:${userId}`, 0, -1);
+                
+                // Send pending notifications
+                pendingNotifications.forEach((notif) => {
+                    const parsedNotif = JSON.parse(notif);
+                    setTimeout(() => { 
+                        socket.emit("notification", {
+                            toastType: 'success',
+                            title: parsedNotif.notification?.title || 'Pending Notification',
+                            message: parsedNotif.notification?.message || 'You have a pending notification',
+                            position: "top-right",
+                            autoClose: 5000,
+                            hideProgressBar: false,
+                            closeOnClick: true,
+                            pauseOnHover: true,
+                            draggable: true,
+                            data: parsedNotif.data
+                        }); 
+                    }, 4000);
+                });
+                
+                // Clear the pending notifications list
+                redis.del(`pending:notifications:${userId}`);
+                
+            } catch (tokenError) {
+                // Handle token verification errors gracefully
+                if (tokenError.name === 'TokenExpiredError') {
+                    console.log('Token expired for user:', userId);
+                    socket.emit('token_expired', { message: 'Your session has expired, please login again' });
+                } else {
+                    console.log('Invalid token:', tokenError.message);
+                    socket.emit('auth_error', { message: 'Invalid authentication token' });
+                }
+                socket.disconnect();
+                return;
+            }
+            
+            //when user connects to socket register him
+            socket.on("register", function (userId) {
+                //add user record as where connections are bring managerd
+                addUser(userId, socket.id); //i think reddis is good for amanaging volatiel connections ststuses and registrations as thhey are gonna temprory registrations
+                console.log(`User ${userId} registered with socket ID: ${socket.id}`);
+                
+                // Notify the client
+                socket.emit('registered', { success: true, message: "User registered successfully." });
+            });
+            
+            //manage disconnection events
+            socket.on('disconnect', function () {
+                console.log("user disconnected with socket id: " + socket.id);
+                removeUser(socket.id);
+                
+                //emit an logout event and rempove that user form localstorage and treat that user as offline
+                socket.emit('logout', { message: "You have been logged out due to disconnection." });
+            });
+            
+        } catch (error) {
+            // Global error handler for the connection event
+            console.error('Error in socket connection handler:', error);
+            socket.emit('error', { message: 'Server error occurred' });
             socket.disconnect();
-            console.log("Missing userId or token. Disconnected.");
-            return;
         }
-        const decoded = jwt.verify(token, 'asjiye7638'); // Replace with your secret key
-        console.log("after decode by method: " + decoded.userId);
-        if (decoded.userId !== parsedUserId) {
-            socket.disconnect();
-            console.log("User ID mismatch. Disconnected.");
-            return;
-        }
-        console.log(`Authenticated user ${userId}`);
+    });
 
-        //here handle socket events
-
-        //firstly fetch users pending as user is offline till now and her arrived online
-        // Fetch pending notifications
-        const pendingNotifications = await redis.lrange(`pending:notifications:${userId}`, 0, -1);
-
-        // Send pending notifications
-        pendingNotifications.forEach((notif) => {
-            const parsedNotif = JSON.parse(notif);
-            setTimeout(() => { 
-                socket.emit("notification", {
-                    toastType: 'success',
-                    title: parsedNotif.notification?.title || 'Pending Notification',
-                    message: parsedNotif.notification?.message || 'You have a pending notification',
-                    position: "top-right",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    data: parsedNotif.data
-                }); 
-            }, 4000);
-        });
-
-        // Clear the pending notifications list
-        redis.del(`pending:notifications:${userId}`);
-
-        //when user connects to socket register him
-        socket.on("register", function (userId) {
-            //add user record as where connections are bring managerd
-            addUser(userId, socket.id); //i think reddis is good for amanaging volatiel connections ststuses and registrations as thhey are gonna temprory registrations
-            console.log(`User ${userId} registered with socket ID: ${socket.id}`);
-
-            // Notify the client
-            socket.emit('registered', { success: true, message: "User registered successfully." });
-        });
-        //manage disconnection events
-        socket.on('disconnect', function () {
-            console.log("user disconnected with socket id: " + socket.id);
-            removeUser(socket.id);
-
-            //emit an logout event and rempove that user form localstorage and treat that user as offline
-            socket.emit('logout', { message: "You have been logged out due to disconnection." });
-        });
+    // Add global error handlers for the socket.io server
+    io.engine.on('connection_error', (err) => {
+        console.log('Connection error:', err);
     });
 
     return io;

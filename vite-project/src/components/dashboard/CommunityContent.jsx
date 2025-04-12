@@ -1,30 +1,93 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Users, UserPlus, MessageSquare } from "lucide-react";
+import { Search, Users, UserPlus, MessageSquare, Check, X } from "lucide-react";
 import FiltersPage from "../FiltersPage";
 import ConnectionsGrid from "../ConnectionsGrid";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const CommunityContent = ({ connections, userId, defaultProfileImage, onConnect, onFilterApply }) => {
   const [activeTab, setActiveTab] = useState("discover");
+  const [acceptedConnections, setAcceptedConnections] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [loading, setLoading] = useState({
+    accepted: false,
+    pending: false
+  });
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Sample connected users data (in a real app, this would come from an API)
-  const connectedUsers = [
-    { id: 1, name: "Alex Johnson", role: "Web Developer", status: "online", lastActive: "Just now" },
-    { id: 2, name: "Sarah Miller", role: "UX Designer", status: "offline", lastActive: "2 hours ago" },
-    { id: 3, name: "Michael Brown", role: "Data Scientist", status: "online", lastActive: "Just now" },
-  ];
+  // Fetch accepted connections
+  const fetchAcceptedConnections = async () => {
+    setLoading(prev => ({ ...prev, accepted: true }));
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.get("http://localhost:4000/connections/accepted", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAcceptedConnections(response.data.data);
+    } catch (error) {
+      console.error("Error fetching accepted connections:", error);
+      toast.error("Failed to load your connections");
+    } finally {
+      setLoading(prev => ({ ...prev, accepted: false }));
+    }
+  };
 
-  // Sample groups data
-  const groups = [
-    { id: 1, name: "JavaScript Enthusiasts", members: 245, category: "Programming" },
-    { id: 2, name: "UI/UX Design Community", members: 189, category: "Design" },
-    { id: 3, name: "Data Science Network", members: 312, category: "Data Science" },
-  ];
+  // Fetch pending connection requests
+  const fetchPendingRequests = async () => {
+    setLoading(prev => ({ ...prev, pending: true }));
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.get("http://localhost:4000/connections/pending", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPendingRequests(response.data.data);
+    } catch (error) {
+      console.error("Error fetching pending requests:", error);
+      toast.error("Failed to load pending requests");
+    } finally {
+      setLoading(prev => ({ ...prev, pending: false }));
+    }
+  };
+
+  // Accept connection request
+  const handleAcceptConnection = async (connectionId) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      await axios.post("http://localhost:4000/connections/accept", 
+        { connectionId },
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      
+      toast.success("Connection accepted successfully");
+      
+      // Refresh both lists
+      fetchPendingRequests();
+      fetchAcceptedConnections();
+    } catch (error) {
+      console.error("Error accepting connection:", error);
+      toast.error("Failed to accept connection");
+    }
+  };
+
+  // Load data when tab changes
+  useEffect(() => {
+    if (activeTab === "connections") {
+      fetchAcceptedConnections();
+    } else if (activeTab === "pending") {
+      fetchPendingRequests();
+    }
+  }, [activeTab]);
+
+  // Filter connections based on search term
+  const filteredConnections = acceptedConnections.filter(connection => 
+    connection.user.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="p-6">
@@ -47,9 +110,10 @@ const CommunityContent = ({ connections, userId, defaultProfileImage, onConnect,
 
       {/* Main Content Tabs */}
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="mb-6">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="discover">Discover People</TabsTrigger>
           <TabsTrigger value="connections">My Connections</TabsTrigger>
+          <TabsTrigger value="pending">Pending Requests</TabsTrigger>
           <TabsTrigger value="groups">Groups</TabsTrigger>
         </TabsList>
 
@@ -89,75 +153,106 @@ const CommunityContent = ({ connections, userId, defaultProfileImage, onConnect,
             <CardContent>
               <div className="relative mb-6">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                <Input placeholder="Search your connections..." className="pl-8" />
+                <Input 
+                  placeholder="Search your connections..." 
+                  className="pl-8" 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
               
-              <div className="space-y-4">
-                {connectedUsers.map(user => (
-                  <div key={user.id} className="flex items-center justify-between p-4 bg-white border rounded-lg hover:shadow-md transition-shadow">
-                    <div className="flex items-center">
-                      <Avatar className="h-10 w-10 mr-4">
-                        <AvatarImage src={defaultProfileImage} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-medium">{user.name}</h3>
-                        <p className="text-sm text-gray-500">{user.role}</p>
+              {loading.accepted ? (
+                <div className="text-center py-8">Loading your connections...</div>
+              ) : filteredConnections.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredConnections.map(connection => (
+                    <div key={connection.connectionId} className="flex items-center justify-between p-4 bg-white border rounded-lg hover:shadow-md transition-shadow">
+                      <div className="flex items-center">
+                        <Avatar className="h-10 w-10 mr-4">
+                          <AvatarImage src={connection.user.profileImg || defaultProfileImage} />
+                          <AvatarFallback>{connection.user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-medium">{connection.user.name}</h3>
+                          <p className="text-sm text-gray-500">{connection.user.expertise || "No expertise listed"}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center">
+                        <Badge className="mr-4">Connected</Badge>
+                        <Button variant="ghost" size="sm">
+                          <MessageSquare className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center">
-                      <Badge variant={user.status === "online" ? "success" : "secondary"} className="mr-4">
-                        {user.status === "online" ? "Online" : "Offline"}
-                      </Badge>
-                      <Button variant="ghost" size="sm">
-                        <MessageSquare className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  You don't have any connections yet. Discover people to connect with!
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Groups Tab */}
-        <TabsContent value="groups">
+        {/* Pending Requests Tab */}
+        <TabsContent value="pending">
           <Card>
             <CardHeader>
-              <CardTitle>Community Groups</CardTitle>
+              <CardTitle>Pending Connection Requests</CardTitle>
               <CardDescription>
-                Join groups based on your interests and connect with like-minded people
+                People who want to connect with you
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="relative mb-6">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                <Input placeholder="Search groups..." className="pl-8" />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {groups.map(group => (
-                  <Card key={group.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center mb-3">
-                        <div className="bg-indigo-100 p-2 rounded-full mr-3">
-                          <Users className="h-5 w-5 text-indigo-600" />
-                        </div>
+              {loading.pending ? (
+                <div className="text-center py-8">Loading pending requests...</div>
+              ) : pendingRequests.length > 0 ? (
+                <div className="space-y-4">
+                  {pendingRequests.map(request => (
+                    <div key={request.id} className="flex items-center justify-between p-4 bg-white border rounded-lg hover:shadow-md transition-shadow">
+                      <div className="flex items-center">
+                        <Avatar className="h-10 w-10 mr-4">
+                          <AvatarImage src={request.requester.profileImg || defaultProfileImage} />
+                          <AvatarFallback>{request.requester.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
                         <div>
-                          <h3 className="font-medium">{group.name}</h3>
-                          <p className="text-sm text-gray-500">{group.members} members</p>
+                          <h3 className="font-medium">{request.requester.name}</h3>
+                          <p className="text-sm text-gray-500">{request.requester.expertise || "No expertise listed"}</p>
                         </div>
                       </div>
-                      <Badge className="mb-3">{group.category}</Badge>
-                      <div className="mt-3">
-                        <Button variant="outline" className="w-full">Join Group</Button>
+                      <div className="flex items-center space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                          onClick={() => handleAcceptConnection(request.id)}
+                        >
+                          <Check className="h-4 w-4 mr-1" /> Accept
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                        >
+                          <X className="h-4 w-4 mr-1" /> Decline
+                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  You don't have any pending connection requests.
+                </div>
+              )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Groups Tab - Keep your existing groups tab */}
+        <TabsContent value="groups">
+          {/* Your existing groups tab content */}
         </TabsContent>
       </Tabs>
     </div>

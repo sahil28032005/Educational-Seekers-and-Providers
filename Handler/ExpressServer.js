@@ -14,8 +14,9 @@ const {
     changeMemberRole, 
     removeMember, 
     getGroupSuggestions 
-} = require("./controllers/groupController");
+} = require("./controllers/groupcontroller"); // Changed from ../controllers to ./controllers
 const authMiddleware = require("./middlewares/authMiddleware");
+const connectionRoutes = require('./routes/connectionRoutes');
 var cors = require('cors');
 
 const app = express();
@@ -25,8 +26,8 @@ const port = 4000;
 // Middleware to parse JSON request bodies
 app.use(express.json());
 
-app.post("/connect", createConnection);
-app.get('/pending', authMiddleware, getPendingConnections);
+// Use connection routes
+app.use('/connections', connectionRoutes);
 
 //filter controller routes
 app.get("/filter", getFilteredConnections);
