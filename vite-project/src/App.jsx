@@ -55,12 +55,39 @@ function AppContent() {
             console.error("Socket registration failed:", response.message);
           }
         });
+        
+        // Listen for token expiration
+        socket.on("token_expired", (data) => {
+          console.log("Token expired:", data.message);
+          // Show toast notification
+          import('react-toastify').then(({ toast }) => {
+            toast.error(data.message, {
+              position: "top-right",
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+            });
+          });
+          
+          // Clear user authentication data
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("userId");
+          localStorage.removeItem("userName");
+          
+          // Redirect to login page after a short delay
+          setTimeout(() => {
+            window.location.href = "/login";
+          }, 2000);
+        });
       }
     }
     
     return () => {
       if (socket) {
         socket.off("registered");
+        socket.off("token_expired");
       }
     };
   }, [socket]);
