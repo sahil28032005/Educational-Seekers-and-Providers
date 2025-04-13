@@ -39,6 +39,20 @@ exports.register = async (req, res) => {
         //otherwise hash password
         const hashedPass = await bcrypt.hash(password, 10);
 
+        //ensure proper expertise array
+        let expertiseArray = [];
+        if (expertise) {
+           // If expertise is a string, put it in an array
+           if (typeof expertise === 'string') {
+            expertiseArray = [expertise];
+        } 
+        // If expertise is already an array, use it directly
+        else if (Array.isArray(expertise)) {
+            // Flatten any nested arrays and ensure all items are strings
+            expertiseArray = expertise.flat().filter(item => typeof item === 'string');
+        }
+        }
+
         //create user with arriven details
         const user = await prisma.user.create({
             data: {
@@ -47,7 +61,7 @@ exports.register = async (req, res) => {
                 password: hashedPass,
                 role: role || "user", // Provide default role if not specified
                 location: location || "", // Handle null values
-                 expertise: expertise ? [expertise] : [], // Convert to array or use empty array
+                 expertise:expertiseArray
             },
         });
 
