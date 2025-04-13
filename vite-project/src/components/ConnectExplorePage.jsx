@@ -102,6 +102,14 @@ const ConnectExplorePage = () => {
     // Handle connect
     const handleConnect = async (id, receiverId) => {
         try {
+            // Get the authentication token
+            const authToken = localStorage.getItem('authToken');
+            
+            if (!authToken) {
+                toast.error("You must be logged in to connect with others");
+                return;
+            }
+            
             setConnections((prevConnections) =>
                 prevConnections.map((connection) =>
                     connection.id === id
@@ -110,12 +118,18 @@ const ConnectExplorePage = () => {
                 )
             );
             const userId = localStorage.getItem('userId');
-
-            const response = await axios.post("http://localhost:4000/connect", {
-                requesterId: userId,
-                receiverId: receiverId,
-            });
-
+    
+            // Include the auth token in the request headers
+            const response = await axios.post("http://localhost:4000/connections/create", 
+                {
+                    requesterId: userId,
+                    receiverId: receiverId,
+                },
+                {
+                    headers: { Authorization: `Bearer ${authToken}` }
+                }
+            );
+    
             if (response.data.success) {
                 toast.success("Connection request sent successfully!");
             } else {
@@ -123,6 +137,18 @@ const ConnectExplorePage = () => {
             }
         } catch (error) {
             console.error("Failed to send connection request:", error);
+            // Revert the UI state if the request fails
+            setConnections((prevConnections) =>
+                prevConnections.map((connection) =>
+                    connection.id === id
+                        ? { ...connection, status: "Connect" }
+                        : connection
+                )
+            );
+            
+            // Show more specific error message if available
+            const errorMessage = error.response?.data?.message || "Failed to send connection request. Please try again.";
+            toast.error(errorMessage);
         }
     };
 
