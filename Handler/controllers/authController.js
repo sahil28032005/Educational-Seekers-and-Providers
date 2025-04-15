@@ -99,10 +99,15 @@ exports.login = async (req, res) => {
 
         //at this point user is validated with his hashed password
         // Generate the token
+        // In your login function
         const token = jwt.sign(
-            { userId: user.id, email: user.email },
-            process.env.JWT_SECRET,
-            { expiresIn: "1h" }
+          { 
+            id: user.id,
+            email: user.email,
+            role: user.role || 'user'
+          }, 
+          process.env.JWT_SECRET || 'your-secret-key',
+          { expiresIn: '24h' }
         );
 
         res.status(200).send({

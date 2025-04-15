@@ -28,19 +28,65 @@ const ConnectExplorePage = () => {
         try {
             console.log('Fetching connections');
             const userId = localStorage.getItem('userId');
-
-            if (!userId) {
-                console.error("User ID is not available in localStorage");
+            const authToken = localStorage.getItem('authToken');
+    
+            if (!userId || !authToken) {
+                console.error("User ID or auth token is not available in localStorage");
                 return;
             }
-
+    
+            // First, get all users
             const response = await axios.get("http://localhost:4000/filter", {
                 params: { excludeUserId: userId },
             });
-
-            setConnections(response.data.data);
+    
+            // Set connections with default "Connect" status first
+            const usersWithDefaultStatus = response.data.data.map(user => ({
+                ...user,
+                status: "Connect"
+            }));
+            
+            setConnections(usersWithDefaultStatus);
+    
+            try {
+                // Then, try to get existing connections to check status
+                const existingConnectionsResponse = await axios.get(
+                    "http://localhost:4000/connections/all",
+                    {
+                        headers: { Authorization: `Bearer ${authToken}` }
+                    }
+                );
+    
+                // Process the connections to include connection status
+                const existingConnections = existingConnectionsResponse.data.data || [];
+                const processedConnections = usersWithDefaultStatus.map(user => {
+                    // Find if there's an existing connection with this user
+                    const existingConnection = existingConnections.find(
+                        conn => (conn.requesterId === parseInt(userId) && conn.receiverId === user.id) || 
+                                (conn.receiverId === parseInt(userId) && conn.requesterId === user.id)
+                    );
+                    
+                    // Set the connection status based on existing connection
+                    let status = "Connect";
+                    if (existingConnection) {
+                        status = existingConnection.status.charAt(0).toUpperCase() + 
+                                 existingConnection.status.slice(1); // Capitalize first letter
+                    }
+                    
+                    return {
+                        ...user,
+                        status
+                    };
+                });
+    
+                setConnections(processedConnections);
+            } catch (connectionError) {
+                console.error("Error fetching connection status:", connectionError);
+                // We already set connections with default status, so we can continue
+            }
         } catch (error) {
             console.error("Error fetching connections:", error);
+            toast.error("Failed to load connections. Please try again later.");
         }
     };
 
@@ -110,10 +156,11 @@ const ConnectExplorePage = () => {
                 return;
             }
             
+            // Optimistically update UI
             setConnections((prevConnections) =>
                 prevConnections.map((connection) =>
                     connection.id === id
-                        ? { ...connection, status: "Request Sent" }
+                        ? { ...connection, status: "Pending" }
                         : connection
                 )
             );
@@ -137,6 +184,13 @@ const ConnectExplorePage = () => {
             }
         } catch (error) {
             console.error("Failed to send connection request:", error);
+            
+            // Check if it's a database connection error
+            const errorMessage = error.response?.data?.message || error.message;
+            const isDatabaseError = errorMessage.includes("database") || 
+                                   errorMessage.includes("prisma") || 
+                                   error.name === "PrismaClientInitializationError";
+            
             // Revert the UI state if the request fails
             setConnections((prevConnections) =>
                 prevConnections.map((connection) =>
@@ -146,9 +200,12 @@ const ConnectExplorePage = () => {
                 )
             );
             
-            // Show more specific error message if available
-            const errorMessage = error.response?.data?.message || "Failed to send connection request. Please try again.";
-            toast.error(errorMessage);
+            // Show appropriate error message
+            if (isDatabaseError) {
+                toast.error("Database connection error. Please try again later.");
+            } else {
+                toast.error(errorMessage || "Failed to send connection request. Please try again.");
+            }
         }
     };
 

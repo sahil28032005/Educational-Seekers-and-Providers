@@ -14,7 +14,8 @@ const {
     changeMemberRole, 
     removeMember, 
     getGroupSuggestions 
-} = require("./controllers/groupcontroller"); // Changed from ../controllers to ./controllers
+} = require("./controllers/groupcontroller");
+const { getUserProfile, updateUserProfile } = require("./controllers/userController");
 const authMiddleware = require("./middlewares/authMiddleware");
 const connectionRoutes = require('./routes/connectionRoutes');
 var cors = require('cors');
@@ -36,6 +37,12 @@ app.get("/filter", getFilteredConnections);
 app.post('/register', register);
 app.post('/login', login);
 app.get('/profile', authMiddleware, getProfile);
+
+// User profile routes
+app.get('/api/users/:userId/profile', authMiddleware, getUserProfile);
+// Or if you're using a different route pattern:
+// app.get('/api/profile', authMiddleware, getUserProfile);
+app.put('/api/users/:userId/profile', authMiddleware, updateUserProfile);
 
 // Group routes
 app.post('/api/groups', authMiddleware, createGroup);
