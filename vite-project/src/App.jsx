@@ -11,6 +11,10 @@ import Footer from './components/Footer';
 import SocketNotificationListener from './components/SocketNotificationListener';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { NotificationProvider } from './context/NotificationContext';
+
+// Make sure this import is at the top of your file
+import ProfilePage from './components/ProfilePage';
 
 function App() {
   return (
@@ -27,10 +31,12 @@ function App() {
         pauseOnHover
       />
       <ToastProvider>
-        <Router>
-          <AppContent />
-          <Toaster />
-        </Router>
+        <NotificationProvider>
+          <Router>
+            <AppContent />
+            <Toaster />
+          </Router>
+        </NotificationProvider>
       </ToastProvider>
     </>
   )
@@ -104,6 +110,7 @@ function AppContent() {
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/pending" element={<PendingRequestsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Routes>
       </div>
       <div className="relative z-50">
