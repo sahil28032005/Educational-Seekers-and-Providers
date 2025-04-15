@@ -2,33 +2,40 @@ const jwt = require('jsonwebtoken');
 
 const authMiddleware = (req, res, next) => {
   try {
-    // Get the authorization header
-    const authHeader = req.headers.authorization;
+    // Get token from header
+    const token = req.headers.authorization?.split(' ')[1];
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ success: false, message: 'No token provided' });
-    }
-    
-    // Extract the token
-    const token = authHeader.split(' ')[1];
+    // Debug: Log the token
+    console.log('Token received:', token ? 'Token exists' : 'No token');
     
     if (!token) {
-      return res.status(401).json({ success: false, message: 'No token provided' });
+      return res.status(401).json({ 
+        success: false, 
+        message: 'No token provided, authorization denied' 
+      });
     }
     
-    // Verify the token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'asjiye7638');
     
-    // Add user info to request
-    req.user = decoded;
+    // Debug: Log the decoded token
+    console.log('Decoded token:', decoded);
     
-    // For debugging
-    console.log("Authenticated user:", req.user);
+    // Set userId from the decoded token
+    // The token contains 'id' not 'userId'
+    req.userId = decoded.id;
+    
+    // Debug: Log the extracted userId
+    console.log('Authenticated user ID:', req.userId);
     
     next();
   } catch (error) {
-    console.error("Auth middleware error:", error);
-    return res.status(401).json({ success: false, message: 'Invalid token' });
+    console.error('Auth middleware error:', error);
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Token is not valid',
+      error: error.message 
+    });
   }
 };
 

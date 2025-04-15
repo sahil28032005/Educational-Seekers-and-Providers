@@ -113,7 +113,8 @@ exports.login = async (req, res) => {
         res.status(200).send({
             success: true,
             message: 'user logined successfully',
-            token: token
+            token: token,
+            userId: user.id,//this must go to frontend 
         });
 
 
