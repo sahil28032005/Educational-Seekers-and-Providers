@@ -309,70 +309,165 @@ exports.acceptConnection = async (req, res) => {
 
 // get accepted connetions for user
 exports.getAcceptedConnections = async (req, res) => {
-    try {
-        const userId = parseInt(req.userId); // From auth middleware
-
-        // Get connections where user is either requester or receiver and status is accepted
-        const acceptedConnections = await prisma.connection.findMany({
-            where: {
-                OR: [
-                    { requesterId: userId },
-                    { receiverId: userId }
-                ],
-                status: 'accepted'
-            },
-            include: {
-                requester: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        profileImg: true,
-                        location: true,
-                        expertise: true
-                    }
-                },
-                receiver: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        profileImg: true,
-                        location: true,
-                        expertise: true
-                    }
-                }
-            },
-            orderBy: {
-                updatedAt: 'desc'
-            }
-        });
-
-        // Transform the data to show the connected user (not the current user)
-        const formattedConnections = acceptedConnections.map(connection => {
-            const isRequester = connection.requesterId === userId;
-            const connectedUser = isRequester ? connection.receiver : connection.requester;
-            
-            return {
-                connectionId: connection.id,
-                user: connectedUser,
-                status: 'accepted',
-                createdAt: connection.createdAt,
-                updatedAt: connection.updatedAt
-            };
-        });
-
-        return res.status(200).json({
-            success: true,
-            message: 'Accepted connections retrieved successfully',
-            data: formattedConnections
-        });
-    } catch (error) {
-        console.error('Error fetching accepted connections:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'Failed to fetch accepted connections',
-            error: error.message
-        });
+  try {
+    // Fix the userId parsing issue
+    if (!req.userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'User ID not found. Authentication required.' 
+      });
     }
+    
+    // Parse userId safely with base 10
+    const userId = parseInt(req.userId, 10);
+    
+    // Validate that userId is a valid number
+    if (isNaN(userId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid user ID format.' 
+      });
+    }
+
+    console.log('Fetching connections for user ID:', userId);
+
+    // Get connections where user is either requester or receiver and status is accepted
+    const acceptedConnections = await prisma.connection.findMany({
+      where: {
+        OR: [
+          {
+            requesterId: userId
+          },
+          {
+            receiverId: userId
+          }
+        ],
+        status: "accepted"
+      },
+      include: {
+        requester: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profileImg: true,
+            location: true,
+            expertise: true
+          }
+        },
+        receiver: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profileImg: true,
+            location: true,
+            expertise: true
+          }
+        }
+      },
+      orderBy: {
+        updatedAt: "desc"
+      }
+    });
+
+    // Transform the data to show the connected user (not the current user)
+    const formattedConnections = acceptedConnections.map(connection => {
+      const isRequester = connection.requesterId === userId;
+      const connectedUser = isRequester ? connection.receiver : connection.requester;
+      
+      return {
+        connectionId: connection.id,
+        user: connectedUser,
+        status: 'accepted',
+        createdAt: connection.createdAt,
+        updatedAt: connection.updatedAt
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Accepted connections retrieved successfully',
+      data: formattedConnections
+    });
+  } catch (error) {
+    console.error('Error fetching accepted connections:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch accepted connections',
+      error: error.message
+    });
+  }
+};
+
+// Add a new function to get all connections
+exports.getAllConnections = async (req, res) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'User ID not found. Authentication required.' 
+      });
+    }
+    
+    const userId = parseInt(req.userId, 10);
+    
+    if (isNaN(userId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid user ID format.' 
+      });
+    }
+
+    // Get all connections for the user (pending, accepted, rejected)
+    const allConnections = await prisma.connection.findMany({
+      where: {
+        OR: [
+          {
+            requesterId: userId
+          },
+          {
+            receiverId: userId
+          }
+        ]
+      },
+      include: {
+        requester: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profileImg: true,
+            location: true,
+            expertise: true
+          }
+        },
+        receiver: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            profileImg: true,
+            location: true,
+            expertise: true
+          }
+        }
+      },
+      orderBy: {
+        updatedAt: "desc"
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      connections: allConnections
+    });
+  } catch (error) {
+    console.error('Error fetching all connections:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch all connections',
+      error: error.message
+    });
+  }
 };

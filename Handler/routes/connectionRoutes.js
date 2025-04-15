@@ -15,4 +15,7 @@ router.post('/accept', authMiddleware, connectionController.acceptConnection);
 // Get accepted connections
 router.get('/accepted', authMiddleware, connectionController.getAcceptedConnections);
 
+// Add the missing route for all connections
+router.get('/all', authMiddleware, connectionController.getAllConnections);
+
 module.exports = router;
