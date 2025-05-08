@@ -41,7 +41,7 @@ const Login = () => {
             setLoading(false);
             setSuccess("Login successful!");
             
-            // Store token and extract userId
+            // Store token
             const token = response.data.token;
             localStorage.setItem("authToken", token);
 
@@ -49,10 +49,13 @@ const Login = () => {
             let userId;
             if (response.data.userId) {
                 userId = response.data.userId;
+                console.log("User ID from response:", userId);
             } else {
                 // Decode the token to get the userId
                 const decodedToken = jwtDecode(token);
-                userId = decodedToken.userId;
+                // The token contains 'id' not 'userId'
+                userId = decodedToken.id;
+                console.log("User ID from token:", userId);
             }
 
             // Store userId in localStorage
@@ -60,8 +63,10 @@ const Login = () => {
             
             console.log("Logged in user ID:", userId);
             
-            // Instead of connecting to socket here, just navigate to home page
-            // The socket connection will be handled by the useSocket hook
+            // Show success toast
+            toast.success("Login successful!");
+            
+            // Navigate to home page
             setTimeout(() => {
                 navigate("/");
             }, 1000);
@@ -69,6 +74,7 @@ const Login = () => {
         } catch (error) {
             setLoading(false);
             setError(error.response?.data?.message || "An error occurred during login.");
+            toast.error(error.response?.data?.message || "An error occurred during login.");
         }
     };
 
