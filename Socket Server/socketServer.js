@@ -40,38 +40,41 @@ const startSocketServer = (server) => {
             //take handshake data here such as an userId and his tokens
             const { userId, token } = socket.handshake.query;
             
-            // Check if token and userId exist
-            if (!token || !userId) {
-                socket.emit('auth_error', { message: 'Missing userId or token' });
+            // Check if token exists (userId might be undefined)
+            if (!token) {
+                socket.emit('auth_error', { message: 'Missing token' });
                 socket.disconnect();
-                console.log("Missing userId or token. Disconnected.");
+                console.log("Missing token. Disconnected.");
                 return;
             }
             
-            // Parse userId safely
-            const parsedUserId = parseInt(userId, 10); // Use base 10 to avoid unintended behavior.
             console.log("userId: " + userId);
             console.log("token: " + token);
             
             // Validate the token with error handling
             try {
                 const decoded = jwt.verify(token, 'asjiye7638'); // Replace with your secret key
-                console.log("after decode by method: " + decoded.userId);
+                const tokenUserId = decoded.id;
+                console.log("User ID from token: " + tokenUserId);
                 
-                if (decoded.userId !== parsedUserId) {
+                // If userId is provided, verify it matches the token
+                // But if userId is undefined, just use the token's userId
+                if (userId && parseInt(userId, 10) !== tokenUserId) {
                     socket.emit('auth_error', { message: 'User ID mismatch' });
                     socket.disconnect();
                     console.log("User ID mismatch. Disconnected.");
                     return;
                 }
                 
-                console.log(`Authenticated user ${userId}`);
+                // Use the ID from the token as the authenticated user ID
+                const authenticatedUserId = tokenUserId;
+                console.log(`Authenticated user ${authenticatedUserId}`);
                 
                 //here handle socket events
                 
                 //firstly fetch users pending as user is offline till now and her arrived online
                 // Fetch pending notifications
-                const pendingNotifications = await redis.lrange(`pending:notifications:${userId}`, 0, -1);
+                const pendingNotifications = await redis.lrange(`pending:notifications:${authenticatedUserId}`, 0, -1);
                 
                 // Send pending notifications
                 pendingNotifications.forEach((notif) => {
@@ -108,15 +111,15 @@ const startSocketServer = (server) => {
                 return;
             }
             
-            //when user connects to socket register him
-            socket.on("register", function (userId) {
-                //add user record as where connections are bring managerd
-                addUser(userId, socket.id); //i think reddis is good for amanaging volatiel connections ststuses and registrations as thhey are gonna temprory registrations
-                console.log(`User ${userId} registered with socket ID: ${socket.id}`);
-                
-                // Notify the client
-                socket.emit('registered', { success: true, message: "User registered successfully." });
-            });
+            //when user connects to socket register him - this is now handled above
+            //socket.on("register", function (userId) {
+            //    //add user record as where connections are bring managerd
+            //    addUser(userId, socket.id);
+            //    console.log(`User ${userId} registered with socket ID: ${socket.id}`);
+            //    
+            //    // Notify the client
+            //    socket.emit('registered', { success: true, message: "User registered successfully." });
+            //});
             
             //manage disconnection events
             socket.on('disconnect', function () {
